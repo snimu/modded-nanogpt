@@ -208,7 +208,11 @@ class Block(nn.Module):
 
 
 def mixin_bytes(token_embs: Tensor, byte_embs: Tensor, weight: nn.Parameter):
+    if master_process := int(os.environ["RANK"]) == 0:
+        print(f"{token_embs.shape=} {byte_embs.shape=}, {weight.shape=}")
     byte_embs = einops.rearrange(byte_embs, "(S bpt) D -> S (bpt D)", bpt=16)
+    if master_process:
+        print(f"{token_embs.shape=} {byte_embs.shape=}, {weight.shape=}")
     x = torch.cat([token_embs, byte_embs], dim=-1)
     return norm(F.linear(x, weight.type_as(x)))
 
