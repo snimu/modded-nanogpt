@@ -609,7 +609,8 @@ warmup_steps = 10
 initial_state = copy.deepcopy(dict(model=model.state_dict(), optimizers=[opt.state_dict() for opt in optimizers]))
 for _ in range(warmup_steps):
     token_inputs = token_targets = torch.randint(0, args.token_vocab_size, size=(args.train_seq_len,), device="cuda")
-    model(token_inputs.to(torch.int32), token_targets, get_window_size_blocks(0)).backward()
+    byte_inputs = torch.randin(0, args.byte_vocab_size, size=(args.train_seq_len * 16,), device="cuda")
+    model(token_inputs.to(torch.int32), byte_inputs.to(torch.int32), token_targets, get_window_size_blocks(0)).backward()
     for param in model.parameters():
         dist.all_reduce(param.grad, op=dist.ReduceOp.AVG)
     for opt in optimizers:
