@@ -208,8 +208,9 @@ class Block(nn.Module):
 
 
 def mixin_bytes(token_embs: Tensor, byte_embs: Tensor, weight: nn.Parameter):
-    assert False, f"{token_embs.shape=} {byte_embs.shape=}, {weight.shape=}"
+    # token_embs.shape=torch.Size([1, 65536, 768]) byte_embs.shape=torch.Size([1048576, 64]), weight.shape=torch.Size([1024, 1792])
     byte_embs = einops.rearrange(byte_embs, "(S bpt) D -> S (bpt D)", bpt=16)
+    assert False, f"{token_embs.shape=} {byte_embs.shape=}, {weight.shape=}"
     x = torch.cat([token_embs, byte_embs], dim=-1)
     return norm(F.linear(x, weight.type_as(x)))
 
