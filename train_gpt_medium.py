@@ -538,7 +538,7 @@ print0("="*100)
 #    Construct model and optimizer     #
 ########################################
 
-model: nn.Module = GPT(
+model: GPT = GPT(
     token_vocab_size=args.token_vocab_size, byte_vocab_size=args.byte_vocab_size,
     num_layers=16, num_heads=8,
     model_dim=1024, token_dim=768, byte_dim=64,
@@ -559,7 +559,7 @@ head_params: list[nn.Parameter] = [model.lm_head_w]
 # sanity check
 params_collections = [hidden_matrix_params, embed_params, scalar_params, head_params]
 optimized_parameters_set = {p for params in params_collections for p in params}
-assert optimized_parameters_set == {*model.parameters()}
+assert optimized_parameters_set == {*model.parameters()}, f"{[n for n, p in model.named_parameters() if p not in optimized_parameters_set]}"
 assert len(optimized_parameters_set) == sum(len(lst) for lst in params_collections)
 
 # init the optimizer(s)
