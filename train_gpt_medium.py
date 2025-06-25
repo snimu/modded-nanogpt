@@ -331,7 +331,7 @@ class GPT(nn.Module):
 # -----------------------------------------------------------------------------
 # Our own simple Distributed Data Loader
 
-@torch.compile()
+@torch.compile
 def pull_from_left(
     byte_tensor: torch.Tensor, bytes_per_token: int, pad_byte: int, eot_byte: int
 ) -> torch.Tensor:
