@@ -352,8 +352,8 @@ class Hyperparameters:
     train_seq_len = 64*1024 # FlexAttention sequence length
     val_seq_len = 4*64*1024 # FlexAttention sequence length for validation
     # optimization
-    num_iterations = 5960 # number of iterations to run
-    cooldown_frac = 0.7 # fraction of training spent cooling down the learning rate
+    num_iterations = 6450 # number of iterations to run
+    cooldown_frac = 0.6 # fraction of training spent cooling down the learning rate
     # architecture
     vocab_size = 50257
     # evaluation and logging
@@ -390,7 +390,7 @@ import torch._inductor.codecache # noqa: E402
 import torch._inductor.graph # noqa: E402
 def _patched_trace_structured(name, metadata_fn, **kwargs):
     if name == "inductor_output_code":
-        print0(f"inductor_output_code: {metadata_fn().get('filename', 'Unknown')}")
+        print0(f"inductor_output_code: {metadata_fn().get("filename", "Unknown")}")
     trace_structured(name, metadata_fn, **kwargs)
 torch._inductor.codecache.trace_structured = _patched_trace_structured
 torch._inductor.graph.trace_structured = _patched_trace_structured
@@ -462,8 +462,7 @@ def get_window_size_blocks(step: int):
     assert 0 <= x <= 1
     # Linearly increase the block-wise sliding window size over training 128 -> 1792
     # increase by @fernbear.bsky.social; block-wise by @YouJiacheng
-    factor = 4 * x ** 3 - 6 * x ** 2 + 3 * x
-    window_size = next_multiple_of_n(3456 * factor, n=128)
+    window_size = next_multiple_of_n(1728 * x, n=128)
     return get_window_size_blocks_helper(window_size)
 
 model: nn.Module = torch.compile(model, dynamic=False)
