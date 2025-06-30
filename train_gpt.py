@@ -562,7 +562,7 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
             pad_byte=456,
             eot_byte=457,
         )
-        yield token_inputs, byte_inputs, token_targets
+        yield token_inputs, byte_inputs.to(dtype=token_inputs.dtype), token_targets
 
 # -----------------------------------------------------------------------------
 # int main
