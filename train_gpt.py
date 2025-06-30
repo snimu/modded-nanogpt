@@ -542,7 +542,7 @@ def _load_data_shard(file: Path):
         assert nbytes == 2 * num_tokens, "number of tokens read does not match header"
     return tokens
 
-@torch.inferencew_mode()
+@torch.inference_mode()
 def distributed_data_generator(filename_pattern: str, batch_size: int, rank : int, world_size : int, vocab_size: int):
     files = sorted(Path.cwd().glob(filename_pattern))
     ttb_emb = make_token_to_bytes_embedding(vocab_size)
