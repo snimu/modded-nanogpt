@@ -636,6 +636,7 @@ model: nn.Module = GPT(
 for m in model.modules():
     if isinstance(m, nn.Embedding):
         m.bfloat16()
+model.byte_mixin.weight.data = model.byte_mixin.weight.data.to(torch.bfloat16)  # avoid type error in backward
 for param in model.parameters():
     dist.broadcast(param.detach(), 0)
 
@@ -647,6 +648,7 @@ head_params = [model.lm_head.weight]
 
 # init the optimizer(s)
 adam_params = [dict(params=head_params, lr=0.22), dict(params=embed_params, lr=0.6), dict(params=scalar_params, lr=0.04)]
+adam_params.append(dict(params=[model.byte_mixin.weight], lr=0.2))
 # small adam epsilon by @YouJiacheng. this is an alternate method of fixing the world_size dependence
 # discovered by @fernbear.bsky.social https://x.com/hi_tysam/status/1879692937589875094
 optimizer1 = torch.optim.Adam(adam_params, betas=(0.8, 0.95), eps=1e-10, fused=True)
