@@ -629,7 +629,7 @@ print0("="*100)
 
 model: nn.Module = GPT(
     token_vocab_size=args.token_vocab_size, byte_vocab_size=args.byte_vocab_size,
-    num_layers=12, num_heads=6, model_dim=768,
+    num_layers=12, num_heads=6, model_dim=768, token_dim=512, byte_dim=48,
     max_seq_len=max(args.train_seq_len, args.val_seq_len),
 ).cuda()
 for m in model.modules():
