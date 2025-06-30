@@ -519,7 +519,7 @@ def make_token_to_bytes_embedding(vocab_size: int) -> nn.Embedding:
     for idx in ttb:
         ttb_emb.weight.data[idx] = torch.tensor(ttb[idx])
     ttb_emb.weight.requires_grad = False
-    return ttb_emb.cuda()
+    return ttb_emb.cuda().bfloat16()
 
 
 def tokens_to_bytes(tokens: torch.Tensor, emb: nn.Embedding) -> torch.Tensor:
