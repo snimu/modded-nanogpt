@@ -311,6 +311,17 @@ class Block(nn.Module):
         x = x + self.mlp(norm(x))
         return x
 
+
+def mixin_bytes(token_embs: Tensor, byte_embs: Tensor, byte_mixin: CastedLinear):
+    # equivalent to einops.rearrange(byte_embs, "B (S bpt) D -> B S (bpt D)", bpt=16)
+    B, SB, D = byte_embs.shape
+    bpt = 16
+    S = SB // bpt
+    byte_embs = byte_embs.view(B, S, bpt, D).reshape(B, S, bpt * D)
+    # concatenate token and byte embeddings
+    x = torch.cat([token_embs, byte_embs], dim=-1)
+    return norm(byte_mixin(x))
+
 # -----------------------------------------------------------------------------
 # The main model
 
@@ -328,6 +339,7 @@ class GPT(nn.Module):
         super().__init__()
         self.embed_tokens = nn.Embedding(token_vocab_size, token_dim)
         self.embed_bytes = nn.Embedding(byte_vocab_size, byte_dim)
+        self.byte_mixin = CastedLinear(token_dim + 16 * byte_dim, model_dim)
         # token value embeddings by @KoszarskyB - inspired by @Grad62304977's value residual implementation following https://arxiv.org/abs/2410.17897
         # value embedding code simplification inspired by @ragulpr https://github.com/KellerJordan/modded-nanogpt/pull/78
         self.value_embeds = nn.ModuleList([nn.Embedding(token_vocab_size, model_dim) for _ in range(3)])
@@ -393,7 +405,9 @@ class GPT(nn.Module):
         block_masks = [long_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, long_bm]
         assert len(block_masks) == len(self.blocks)
 
-        x = x0 = norm(self.embed_tokens(token_inputs)[None]) # use of norm here by @Grad62304977
+        x_toks = norm(self.embed_tokens(token_inputs)[None]) # use of norm here by @Grad62304977
+        x_bytes = norm(self.embed_bytes(byte_inputs)[None])
+        x = x0 = mixin_bytes(x_toks, x_bytes, self.byte_mixin)
 
         # U-net design by @brendanh0gan
         skip_connections = []
