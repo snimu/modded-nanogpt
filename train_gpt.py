@@ -542,7 +542,6 @@ def _load_data_shard(file: Path):
         assert nbytes == 2 * num_tokens, "number of tokens read does not match header"
     return tokens
 
-@torch.inference_mode()
 def distributed_data_generator(filename_pattern: str, batch_size: int, rank : int, world_size : int, vocab_size: int):
     files = sorted(Path.cwd().glob(filename_pattern))
     ttb_emb = make_token_to_bytes_embedding(vocab_size)
@@ -557,12 +556,13 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
         token_inputs = buf[:-1].to(device="cuda", dtype=torch.int32, non_blocking=True) # no sync on host side;
         token_targets = buf[1:].to(device="cuda", dtype=torch.int64, non_blocking=True) # H2D in another stream isn't helpful.
         pos += batch_size
-        byte_inputs = pull_from_left(
-            byte_tensor=tokens_to_bytes(token_inputs, ttb_emb),
-            bytes_per_token=16,
-            pad_byte=456,
-            eot_byte=457,
-        )
+        with torch.no_grad():
+            byte_inputs = pull_from_left(
+                byte_tensor=tokens_to_bytes(token_inputs, ttb_emb),
+                bytes_per_token=16,
+                pad_byte=456,
+                eot_byte=457,
+            )
         yield token_inputs, byte_inputs.to(dtype=token_inputs.dtype), token_targets
 
 # -----------------------------------------------------------------------------
