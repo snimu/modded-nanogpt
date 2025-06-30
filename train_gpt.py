@@ -406,7 +406,7 @@ class GPT(nn.Module):
         assert len(block_masks) == len(self.blocks)
 
         x_toks = norm(self.embed_tokens(token_inputs)[None]) # use of norm here by @Grad62304977
-        x_bytes = norm(self.embed_bytes(byte_inputs)[None])
+        x_bytes = norm(self.embed_bytes(byte_inputs).squeeze()[None])
         x = x0 = mixin_bytes(x_toks, x_bytes, self.byte_mixin)
 
         # U-net design by @brendanh0gan
