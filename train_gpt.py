@@ -790,7 +790,7 @@ def wait_for_gradients():
 #        Training and validation       #
 ########################################
 
-train_loader = distributed_data_generator(args.train_files, world_size * args.train_seq_len, rank, world_size)
+train_loader = distributed_data_generator(args.train_files, world_size * args.train_seq_len, rank, world_size, args.token_vocab_size)
 training_time_ms = 0
 # start the clock
 torch.cuda.synchronize()
@@ -809,7 +809,7 @@ for step in range(train_steps + 1):
         val_batch_size = world_size * args.val_seq_len
         assert args.val_tokens % val_batch_size == 0
         val_steps = args.val_tokens // val_batch_size
-        val_loader = distributed_data_generator(args.val_files, val_batch_size, rank, world_size)
+        val_loader = distributed_data_generator(args.val_files, val_batch_size, rank, world_size, args.token_vocab_size)
         val_loss = 0
         with torch.no_grad():
             for _ in range(val_steps):
