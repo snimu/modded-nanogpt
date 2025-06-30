@@ -20,7 +20,6 @@ import torch.distributed as dist
 from torch.nn.attention.flex_attention import BlockMask, flex_attention
 torch._inductor.config.coordinate_descent_tuning = True # we allow this flag for medium track
 torch._dynamo.config.compiled_autograd = True
-import einops
 
 # -----------------------------------------------------------------------------
 # Muon optimizer
@@ -208,7 +207,12 @@ class Block(nn.Module):
 
 
 def mixin_bytes(token_embs: Tensor, byte_embs: Tensor, weight: nn.Parameter):
-    byte_embs = einops.rearrange(byte_embs, "B (S bpt) D -> B S (bpt D)", bpt=16)
+    # equivalent to einops.rearrange(byte_embs, "B (S bpt) D -> B S (bpt D)", bpt=16)
+    B, SB, D = byte_embs.shape
+    bpt = 16
+    S = SB // bpt
+    byte_embs = byte_embs.view(B, S, bpt, D).reshape(B, S, bpt * D)
+    # concatenate token and byte embeddings
     x = torch.cat([token_embs, byte_embs], dim=-1)
     return norm(F.linear(x, weight.type_as(x)))
 
