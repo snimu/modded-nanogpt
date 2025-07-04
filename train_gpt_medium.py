@@ -4,6 +4,7 @@ with open(sys.argv[0]) as f:
     code = f.read() # read the code of this file ASAP, for logging
 import uuid
 import time
+import json
 import copy
 from dataclasses import dataclass
 from functools import lru_cache
@@ -17,7 +18,7 @@ import torch.nn.functional as F
 import torch.distributed as dist
 # use of FlexAttention contributed by @KoszarskyB
 from torch.nn.attention.flex_attention import BlockMask, flex_attention
-torch._inductor.config.coordinate_descent_tuning = True # we have banned this flag for new records because it causes compilation to take 30min
+torch._inductor.config.coordinate_descent_tuning = True # we allow this flag for medium track
 torch._dynamo.config.compiled_autograd = True
 
 # -----------------------------------------------------------------------------
@@ -313,6 +314,107 @@ class GPT(nn.Module):
 # -----------------------------------------------------------------------------
 # Our own simple Distributed Data Loader
 
+@torch.compile
+def pull_from_left(
+    byte_tensor: torch.Tensor, bytes_per_token: int, pad_byte: int, eot_byte: int
+) -> torch.Tensor:
+    """
+    Pulls valid bytes towards the right boundary of each token, considering EOT tokens
+    as sequence breaks. Bytes are taken from the token after the previous EOT up to
+    the current token. The rightmost available bytes are kept if capacity is exceeded.
+    EOT tokens retain their original bytes. Vectorized implementation.
+    """
+    B, T = byte_tensor.size()
+    if T == 0:
+        return byte_tensor
+    T_reduced = T // bytes_per_token
+    assert T % bytes_per_token == 0, "T must be divisible by bytes_per_token"
+    if T_reduced == 0:
+        return torch.full_like(byte_tensor, pad_byte)
+
+    byte_tensor_view = byte_tensor.view(B, T_reduced, bytes_per_token)
+    device = byte_tensor.device
+    non_pad_mask = byte_tensor_view != pad_byte
+    is_eot_token = torch.all(byte_tensor_view == eot_byte, dim=2)
+    valid_bytes_per_token = non_pad_mask.sum(dim=2)
+    cum_valid_bytes = torch.cumsum(
+        torch.cat([torch.zeros_like(valid_bytes_per_token[:, :1]), valid_bytes_per_token], dim=1),
+        dim=1
+    )
+    end_valid_byte_idx = cum_valid_bytes[:, 1:]
+    total_valid_bytes_per_batch = cum_valid_bytes[:, -1] # (B,)
+    prev_eot_token_indices = torch.full_like(is_eot_token, -1, dtype=torch.long) # (B, Tr)
+    for b in range(B):
+        eot_pos = is_eot_token[b].nonzero(as_tuple=True)[0]
+        if eot_pos.numel() > 0:
+            token_indices = torch.arange(T_reduced, device=device)
+            prev_eot_rel_idx = torch.searchsorted(eot_pos, token_indices, side='right') - 1
+            valid_mask = prev_eot_rel_idx >= 0
+            prev_eot_token_indices[b, valid_mask] = eot_pos[prev_eot_rel_idx[valid_mask]]
+
+    prev_eot_plus_1 = (prev_eot_token_indices + 1).clamp(min=0) # Clamp to handle -1 -> 0
+    pull_range_start_idx = cum_valid_bytes.gather(1, prev_eot_plus_1) # (B, Tr)
+    pull_range_start_idx = torch.where(prev_eot_token_indices == -1, torch.tensor(0, device=device, dtype=torch.long), pull_range_start_idx)
+    pull_range_end_idx = end_valid_byte_idx # (B, Tr)
+    available_bytes = pull_range_end_idx - pull_range_start_idx # (B, Tr)
+    available_bytes = torch.clamp(available_bytes, min=0)
+    bytes_to_use = torch.minimum(available_bytes, torch.tensor(bytes_per_token, device=device)) # (B, Tr)
+    gather_start_global_idx = pull_range_end_idx - bytes_to_use # (B, Tr)
+
+    flat_indices_b, flat_indices_t, flat_indices_k = non_pad_mask.nonzero(as_tuple=True)
+    flat_valid_bytes = byte_tensor_view[flat_indices_b, flat_indices_t, flat_indices_k]
+    batch_offsets = torch.cat([torch.zeros(1, device=device, dtype=torch.long), total_valid_bytes_per_batch.cumsum(0)[:-1]])
+    k_indices_relative = torch.arange(bytes_per_token, device=device).view(1, 1, -1) # (1, 1, bpt)
+    target_global_valid_idx = gather_start_global_idx.unsqueeze(2) + k_indices_relative # (B, Tr, bpt)
+    gather_mask = k_indices_relative < bytes_to_use.unsqueeze(2) # (B, Tr, bpt)
+    absolute_gather_idx = target_global_valid_idx + batch_offsets.view(B, 1, 1) # (B, Tr, bpt)
+    total_flat_size = batch_offsets[-1] + total_valid_bytes_per_batch[-1] if B > 0 else 0
+    safe_indices = torch.where(gather_mask, absolute_gather_idx, total_flat_size)
+    padded_flat_valid_bytes = torch.cat([flat_valid_bytes, torch.tensor([pad_byte], device=device, dtype=byte_tensor.dtype)])
+    clamped_indices = torch.clamp(safe_indices, max=total_flat_size)
+    gathered_bytes_flat = padded_flat_valid_bytes[clamped_indices] # (B, Tr, bpt)
+
+    pulled_non_eot = torch.full_like(byte_tensor_view, pad_byte)
+    dest_k_indices = bytes_per_token - bytes_to_use.unsqueeze(2) + k_indices_relative
+    b_indices = torch.arange(B, device=device).view(B, 1, 1).expand_as(dest_k_indices)
+    t_indices = torch.arange(T_reduced, device=device).view(1, T_reduced, 1).expand_as(dest_k_indices)
+    valid_dest_k = dest_k_indices[gather_mask]
+    valid_b = b_indices[gather_mask]
+    valid_t = t_indices[gather_mask]
+    valid_gathered_bytes = gathered_bytes_flat[gather_mask]
+
+    if valid_b.numel() > 0:
+        pulled_non_eot[valid_b, valid_t, valid_dest_k] = valid_gathered_bytes
+
+    final_pulled_tensor = torch.where(
+        is_eot_token.unsqueeze(-1),
+        byte_tensor_view,
+        pulled_non_eot
+    )
+
+    return final_pulled_tensor.view(B, T)
+
+
+def make_token_to_bytes_embedding(vocab_size: int) -> nn.Embedding:
+    ttb_emb = nn.Embedding(vocab_size, 16)
+    with open("embeddings/ttb_16_left_pad.json", "r") as f:
+        text = f.read()
+    ttb = json.loads(text)
+    ttb = {int(k): [int(x) for x in v] for k, v in ttb.items()}
+    for idx in ttb:
+        ttb_emb.weight.data[idx] = torch.tensor(ttb[idx])
+    ttb_emb.weight.requires_grad = False
+    return ttb_emb.cuda()
+
+
+def tokens_to_bytes(tokens: torch.Tensor, emb: nn.Embedding) -> torch.Tensor:
+    with torch.no_grad():
+        byte_tensor = emb(tokens).to(torch.int64)
+    if tokens.ndim == 2:
+        return byte_tensor.view(byte_tensor.shape[0], -1)
+    else:
+        return byte_tensor.view(-1).unsqueeze(0)
+
 def _load_data_shard(file: Path):
     header = torch.from_file(str(file), False, 256, dtype=torch.int32) # header is 256 int32
     assert header[0] == 20240520, "magic number mismatch in the data .bin file"
@@ -325,8 +427,9 @@ def _load_data_shard(file: Path):
         assert nbytes == 2 * num_tokens, "number of tokens read does not match header"
     return tokens
 
-def distributed_data_generator(filename_pattern: str, batch_size: int, rank : int, world_size : int):
+def distributed_data_generator(filename_pattern: str, batch_size: int, rank : int, world_size : int, vocab_size: int):
     files = sorted(Path.cwd().glob(filename_pattern))
+    ttb_emb = make_token_to_bytes_embedding(vocab_size)
     assert batch_size % world_size == 0
     local_batch_size = batch_size // world_size
     file_iter = iter(files) # use itertools.cycle(files) instead if you want to do multi-epoch training
@@ -335,10 +438,16 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
         if pos + batch_size + 1 >= len(tokens):
             tokens, pos = _load_data_shard(next(file_iter)), 0
         buf = tokens[pos + rank * local_batch_size:][:local_batch_size + 1]
-        inputs = buf[:-1].to(device="cuda", dtype=torch.int32, non_blocking=True) # no sync on host side;
-        targets = buf[1:].to(device="cuda", dtype=torch.int64, non_blocking=True) # H2D in another stream isn't helpful.
+        token_inputs = buf[:-1].to(device="cuda", dtype=torch.int32, non_blocking=True) # no sync on host side;
+        token_targets = buf[1:].to(device="cuda", dtype=torch.int64, non_blocking=True) # H2D in another stream isn't helpful.
         pos += batch_size
-        yield inputs, targets
+        byte_inputs = pull_from_left(
+            byte_tensor=tokens_to_bytes(token_inputs, ttb_emb),
+            bytes_per_token=16,
+            pad_byte=456,
+            eot_byte=457,
+        )
+        yield token_inputs, byte_inputs, token_targets
 
 # -----------------------------------------------------------------------------
 # int main
@@ -352,8 +461,8 @@ class Hyperparameters:
     train_seq_len = 64*1024 # FlexAttention sequence length
     val_seq_len = 4*64*1024 # FlexAttention sequence length for validation
     # optimization
-    num_iterations = 6450 # number of iterations to run
-    cooldown_frac = 0.6 # fraction of training spent cooling down the learning rate
+    num_iterations = 5960 # number of iterations to run
+    cooldown_frac = 0.7 # fraction of training spent cooling down the learning rate
     # architecture
     vocab_size = 50257
     # evaluation and logging
@@ -462,7 +571,8 @@ def get_window_size_blocks(step: int):
     assert 0 <= x <= 1
     # Linearly increase the block-wise sliding window size over training 128 -> 1792
     # increase by @fernbear.bsky.social; block-wise by @YouJiacheng
-    window_size = next_multiple_of_n(1728 * x, n=128)
+    factor = 4 * x ** 3 - 6 * x ** 2 + 3 * x # cubic schedule by @jadenj3o
+    window_size = next_multiple_of_n(3456 * factor, n=128)
     return get_window_size_blocks_helper(window_size)
 
 model: nn.Module = torch.compile(model, dynamic=False)
@@ -492,7 +602,7 @@ del initial_state
 ########################################
 
 torch.cuda.reset_peak_memory_stats()
-train_loader = distributed_data_generator(args.train_files, world_size * args.train_seq_len, rank, world_size)
+train_loader = distributed_data_generator(args.train_files, world_size * args.train_seq_len, rank, world_size, args.vocab_size)
 training_time_ms = 0
 # start the clock
 dist.barrier()
@@ -511,11 +621,11 @@ for step in range(train_steps + 1):
         val_batch_size = world_size * args.val_seq_len
         assert args.val_tokens % val_batch_size == 0
         val_steps = args.val_tokens // val_batch_size
-        val_loader = distributed_data_generator(args.val_files, val_batch_size, rank, world_size)
+        val_loader = distributed_data_generator(args.val_files, val_batch_size, rank, world_size, args.vocab_size)
         val_loss = 0
         with torch.no_grad():
             for _ in range(val_steps):
-                inputs, targets = next(val_loader)
+                inputs, _, targets = next(val_loader)
                 val_loss += model(inputs, targets, get_window_size_blocks(step))
         val_loss /= val_steps
         del val_loader
@@ -535,7 +645,7 @@ for step in range(train_steps + 1):
         break
 
     # --------------- TRAINING SECTION -----------------
-    inputs, targets = next(train_loader)
+    inputs, _, targets = next(train_loader)
     model(inputs, targets, get_window_size_blocks(step)).backward()
     opt2futures = {
         opt: [dist.all_reduce(p.grad, op=dist.ReduceOp.AVG, async_op=True).get_future() for p in params]
