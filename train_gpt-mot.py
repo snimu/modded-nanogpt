@@ -9,6 +9,7 @@ import json
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+import argparse
 
 os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 import torch
@@ -568,6 +569,11 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
 # -----------------------------------------------------------------------------
 # int main
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--token-dim", type=int, default=512)
+parser.add_argument("--byte-dim", type=int, default=48)
+cli_args = parser.parse_args()
+
 @dataclass
 class Hyperparameters:
     # data
@@ -582,6 +588,9 @@ class Hyperparameters:
     # architecture
     token_vocab_size = 50257
     byte_vocab_size = 458
+    model_dim = 768
+    token_dim = cli_args.token_dim
+    byte_dim = cli_args.byte_dim
     # evaluation and logging
     val_loss_every = 125 # every how many steps to evaluate val loss? 0 for only at the end
     save_checkpoint = False
@@ -630,7 +639,8 @@ print0("="*100)
 
 model: nn.Module = GPT(
     token_vocab_size=args.token_vocab_size, byte_vocab_size=args.byte_vocab_size,
-    num_layers=12, num_heads=6, model_dim=768, token_dim=640, byte_dim=48,
+    num_layers=12, num_heads=6,
+    model_dim=args.model_dim, token_dim=args.token_dim, byte_dim=args.byte_dim,
     max_seq_len=max(args.train_seq_len, args.val_seq_len),
 ).cuda()
 for m in model.modules():
