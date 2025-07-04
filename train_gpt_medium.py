@@ -1,3 +1,5 @@
+
+import argparse
 import os
 import sys
 with open(sys.argv[0]) as f:
@@ -19,7 +21,7 @@ import torch.distributed as dist
 # use of FlexAttention contributed by @KoszarskyB
 from torch.nn.attention.flex_attention import BlockMask, flex_attention
 torch._inductor.config.coordinate_descent_tuning = True # we allow this flag for medium track
-torch._dynamo.config.compiled_autograd = True
+torch._dynamo.config.compiled_autograd = False
 
 # -----------------------------------------------------------------------------
 # Muon optimizer
@@ -211,17 +213,36 @@ class Block(nn.Module):
 def next_multiple_of_n(v: float | int, *, n: int):
     return next(x for x in range(n, int(v) + 1 + n, n) if x >= v)
 
+
+def mixin_bytes(token_embs: Tensor, byte_embs: Tensor, byte_mixin: nn.Parameter):
+    # equivalent to einops.rearrange(byte_embs, "B (S bpt) D -> B S (bpt D)", bpt=16)
+    B, SB, D = byte_embs.shape
+    bpt = 16
+    S = SB // bpt
+    byte_embs = byte_embs.view(B, S, bpt, D).reshape(B, S, bpt * D)
+    # concatenate token and byte embeddings
+    x = torch.cat([token_embs, byte_embs], dim=-1)
+    return norm(F.linear(x, byte_mixin))
+
 class GPT(nn.Module):
-    def __init__(self, vocab_size: int, num_layers: int, num_heads: int, model_dim: int, max_seq_len: int):
+    def __init__(
+            self,
+            token_vocab_size: int, byte_vocab_size: int,
+            num_layers: int, num_heads: int,
+            model_dim: int, token_dim: int, byte_dim: int,
+            max_seq_len: int,
+    ):
         super().__init__()
-        self.embed = nn.Embedding(vocab_size, model_dim)
+        self.embed_tokens = nn.Embedding(token_vocab_size, model_dim)
+        self.embed_bytes = nn.Embedding(byte_vocab_size, model_dim)
+        self.byte_mixin_weight = nn.Parameter(init_linear(torch.empty(model_dim, token_dim + 16 * byte_dim, model_dim)))
         # token value embeddings by @KoszarskyB - inspired by @Grad62304977's value residual implementation following https://arxiv.org/abs/2410.17897
         # value embedding code simplification inspired by @ragulpr https://github.com/KellerJordan/modded-nanogpt/pull/78
-        self.value_embeds = nn.ModuleList([nn.Embedding(vocab_size, model_dim) for _ in range(3)])
+        self.value_embeds = nn.ModuleList([nn.Embedding(token_vocab_size, model_dim) for _ in range(3)])
         self.blocks = nn.ModuleList([Block(model_dim, num_heads, max_seq_len, i) for i in range(num_layers)])
         # there are only 50257 unique GPT-2 tokens; we extend to nearest multiple of 128 for efficiency.
         # suggested to me by @Grad62304977. this originates from Karpathy's experiments.
-        self.lm_head_w = nn.Parameter(torch.zeros(next_multiple_of_n(vocab_size, n=128), model_dim))
+        self.lm_head_w = nn.Parameter(torch.zeros(next_multiple_of_n(token_vocab_size, n=128), model_dim))
         # Add learnable skip connection weights for decoder layers
         assert num_layers % 2 == 0
         self.scalars = nn.Parameter(torch.cat([
@@ -270,19 +291,21 @@ class GPT(nn.Module):
         # Long-short SWA block masks by @leloykun & @YouJiacheng, adapated from suggestion by @Grad62304977, following Gemma 2 paper
         return build_bm(sliding_window_num_blocks), build_bm(sliding_window_num_blocks // 2)
 
-    def forward(self, input_seq: Tensor, target_seq: Tensor, sliding_window_num_blocks: Tensor):
-        assert input_seq.ndim == 1
+    def forward(self, token_inputs: Tensor, byte_inputs: Tensor, token_targets: Tensor, sliding_window_num_blocks: Tensor):
+        assert token_inputs.ndim == 1
 
-        ve = [value_embed(input_seq) for value_embed in self.value_embeds]
+        ve = [value_embed(token_inputs) for value_embed in self.value_embeds]
         # 012 ... 012 structure on token value embeddings by @YouJiacheng, improved on @leloykun's U-net structure
         ve = [ve[0], ve[1], ve[2]] + [None] * (len(self.blocks) - 6) + [ve[0], ve[1], ve[2]]
         assert len(ve) == len(self.blocks)
 
-        long_bm, short_bm = self.create_blockmasks(input_seq, sliding_window_num_blocks)
+        long_bm, short_bm = self.create_blockmasks(token_inputs, sliding_window_num_blocks)
         block_masks = [long_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, long_bm]
         assert len(block_masks) == len(self.blocks)
 
-        x = x0 = norm(self.embed(input_seq)[None]) # use of norm here by @Grad62304977
+        x_toks = norm(self.embed_tokens(token_inputs)[None]) # use of norm here by @Grad62304977
+        x_bytes = norm(self.embed_bytes(byte_inputs).squeeze()[None])
+        x = x0 = mixin_bytes(x_toks, x_bytes, self.byte_mixin_weight)
 
         skip_connections = []
         skip_map = {
@@ -302,13 +325,13 @@ class GPT(nn.Module):
         x = norm(x)
         if self.training:
             logits: Tensor = F.linear(x.flatten(end_dim=1), self.lm_head_w.bfloat16()).float()
-            loss = F.cross_entropy(15 * logits * torch.rsqrt(logits.square() + 225), target_seq)
+            loss = F.cross_entropy(15 * logits * torch.rsqrt(logits.square() + 225), token_targets)
             return loss
 
         loss = 0
         for i in range(4):
             logits: Tensor = F.linear(x.flatten(end_dim=1).chunk(4)[i], self.lm_head_w.bfloat16()).float()
-            loss += F.cross_entropy(15 * logits * torch.rsqrt(logits.square() + 225), target_seq.chunk(4)[i]) / 4
+            loss += F.cross_entropy(15 * logits * torch.rsqrt(logits.square() + 225), token_targets.chunk(4)[i]) / 4
         return loss
 
 # -----------------------------------------------------------------------------
@@ -447,11 +470,17 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
                 bytes_per_token=16,
                 pad_byte=456,
                 eot_byte=457,
-            )
+            ).contiguous()
         yield token_inputs, byte_inputs.to(dtype=token_inputs.dtype), token_targets
 
 # -----------------------------------------------------------------------------
 # int main
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--token-dim", type=int, default=896)
+parser.add_argument("--byte-dim", type=int, default=64)
+cli_args = parser.parse_args()
+
 
 @dataclass
 class Hyperparameters:
@@ -459,13 +488,17 @@ class Hyperparameters:
     train_files = "data/fineweb10B/fineweb_train_*.bin" # input .bin to train on
     val_files = "data/fineweb10B/fineweb_val_*.bin" # input .bin to eval validation loss on
     val_tokens = 10485760 # how many tokens of validation data? it's important to keep this fixed for consistent comparisons
-    train_seq_len = 64*1024 # FlexAttention sequence length
+    train_seq_len = 48*1024 # FlexAttention sequence length
     val_seq_len = 4*64*1024 # FlexAttention sequence length for validation
     # optimization
-    num_iterations = 5960 # number of iterations to run
-    cooldown_frac = 0.7 # fraction of training spent cooling down the learning rate
+    num_iterations = 1770 # number of iterations to run
+    cooldown_frac = 0.4 # fraction of training spent cooling down the learning rate
     # architecture
-    vocab_size = 50257
+    token_vocab_size = 50257
+    byte_vocab_size = 458
+    model_dim = 1024
+    token_dim = cli_args.token_dim
+    byte_dim = cli_args.byte_dim
     # evaluation and logging
     val_loss_every = 125 # every how many steps to evaluate val loss? 0 for only at the end
     save_checkpoint = False
@@ -521,8 +554,12 @@ print0("="*100)
 #    Construct model and optimizer     #
 ########################################
 
-model: nn.Module = GPT(vocab_size=args.vocab_size, num_layers=16, num_heads=8, model_dim=1024,
-                       max_seq_len=max(args.train_seq_len, args.val_seq_len)).cuda()
+model: nn.Module = GPT(
+    token_vocab_size=args.token_vocab_size, byte_vocab_size=args.byte_vocab_size,
+    num_layers=16, num_heads=8,
+    model_dim=1024, token_dim=args.token_dim, byte_dim=args.byte_dim,
+    max_seq_len=max(args.train_seq_len, args.val_seq_len)
+).cuda()
 for m in model.modules():
     if isinstance(m, nn.Embedding):
         m.bfloat16()
@@ -531,7 +568,8 @@ for param in model.parameters():
 
 # collect the parameters to optimize
 hidden_matrix_params = sorted((p for p in model.blocks.parameters() if p.ndim >= 2), key=lambda x: x.size(), reverse=True)
-embed_params = [*model.embed.parameters(), *model.value_embeds.parameters()]
+hidden_matrix_params.append(model.byte_mixin_weight)
+embed_params = [*model.embed_tokens.parameters(), *model.embed_bytes.parameters(), *model.value_embeds.parameters()]
 scalar_params = [model.scalars]
 head_params: list[nn.Parameter] = [model.lm_head_w]
 # sanity check
@@ -586,8 +624,9 @@ model: nn.Module = torch.compile(model, dynamic=False)
 warmup_steps = 10
 initial_state = copy.deepcopy(dict(model=model.state_dict(), optimizers=[opt.state_dict() for opt in optimizers]))
 for _ in range(warmup_steps):
-    inputs = targets = torch.randint(0, args.vocab_size, size=(args.train_seq_len,), device="cuda")
-    model(inputs.to(torch.int32), targets, get_window_size_blocks(0)).backward()
+    token_inputs = targets = torch.randint(0, args.vocab_size, size=(args.train_seq_len,), device="cuda")
+    byte_inputs = torch.randint(0, args.byte_vocab_size, size=(args.train_seq_len * 16,), device="cuda")
+    model(token_inputs.to(torch.int32), byte_inputs.to(torch.int32), targets, get_window_size_blocks(0)).backward()
     for param in model.parameters():
         dist.all_reduce(param.grad, op=dist.ReduceOp.AVG)
     for opt in optimizers:
@@ -626,8 +665,8 @@ for step in range(train_steps + 1):
         val_loss = 0
         with torch.no_grad():
             for _ in range(val_steps):
-                inputs, _, targets = next(val_loader)
-                val_loss += model(inputs, targets, get_window_size_blocks(step))
+                token_inputs, byte_inputs, targets = next(val_loader)
+                val_loss += model(token_inputs, byte_inputs, targets, get_window_size_blocks(step))
         val_loss /= val_steps
         del val_loader
         dist.all_reduce(val_loss, op=dist.ReduceOp.AVG)
@@ -646,8 +685,8 @@ for step in range(train_steps + 1):
         break
 
     # --------------- TRAINING SECTION -----------------
-    inputs, _, targets = next(train_loader)
-    model(inputs, targets, get_window_size_blocks(step)).backward()
+    token_inputs, byte_inputs, targets = next(train_loader)
+    model(token_inputs, byte_inputs, targets, get_window_size_blocks(step)).backward()
     opt2futures = {
         opt: [dist.all_reduce(p.grad, op=dist.ReduceOp.AVG, async_op=True).get_future() for p in params]
         for opt, params in opt2params.items()
