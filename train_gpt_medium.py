@@ -404,7 +404,7 @@ def make_token_to_bytes_embedding(vocab_size: int) -> nn.Embedding:
     for idx in ttb:
         ttb_emb.weight.data[idx] = torch.tensor(ttb[idx])
     ttb_emb.weight.requires_grad = False
-    return ttb_emb.cuda()
+    return ttb_emb.cuda().bfloat16()
 
 
 def tokens_to_bytes(tokens: torch.Tensor, emb: nn.Embedding) -> torch.Tensor:
@@ -441,13 +441,14 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
         token_inputs = buf[:-1].to(device="cuda", dtype=torch.int32, non_blocking=True) # no sync on host side;
         token_targets = buf[1:].to(device="cuda", dtype=torch.int64, non_blocking=True) # H2D in another stream isn't helpful.
         pos += batch_size
-        byte_inputs = pull_from_left(
-            byte_tensor=tokens_to_bytes(token_inputs, ttb_emb),
-            bytes_per_token=16,
-            pad_byte=456,
-            eot_byte=457,
-        )
-        yield token_inputs, byte_inputs, token_targets
+        with torch.no_grad():
+            byte_inputs = pull_from_left(
+                byte_tensor=tokens_to_bytes(token_inputs, ttb_emb),
+                bytes_per_token=16,
+                pad_byte=456,
+                eot_byte=457,
+            )
+        yield token_inputs, byte_inputs.to(dtype=token_inputs.dtype), token_targets
 
 # -----------------------------------------------------------------------------
 # int main
