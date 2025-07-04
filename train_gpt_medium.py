@@ -624,7 +624,7 @@ model: nn.Module = torch.compile(model, dynamic=False)
 warmup_steps = 10
 initial_state = copy.deepcopy(dict(model=model.state_dict(), optimizers=[opt.state_dict() for opt in optimizers]))
 for _ in range(warmup_steps):
-    token_inputs = targets = torch.randint(0, args.vocab_size, size=(args.train_seq_len,), device="cuda")
+    token_inputs = targets = torch.randint(0, args.token_vocab_size, size=(args.train_seq_len,), device="cuda")
     byte_inputs = torch.randint(0, args.byte_vocab_size, size=(args.train_seq_len * 16,), device="cuda")
     model(token_inputs.to(torch.int32), byte_inputs.to(torch.int32), targets, get_window_size_blocks(0)).backward()
     for param in model.parameters():
@@ -642,7 +642,7 @@ del initial_state
 ########################################
 
 torch.cuda.reset_peak_memory_stats()
-train_loader = distributed_data_generator(args.train_files, world_size * args.train_seq_len, rank, world_size, args.vocab_size)
+train_loader = distributed_data_generator(args.train_files, world_size * args.train_seq_len, rank, world_size, args.token_vocab_size)
 training_time_ms = 0
 # start the clock
 dist.barrier()
@@ -661,7 +661,7 @@ for step in range(train_steps + 1):
         val_batch_size = world_size * args.val_seq_len
         assert args.val_tokens % val_batch_size == 0
         val_steps = args.val_tokens // val_batch_size
-        val_loader = distributed_data_generator(args.val_files, val_batch_size, rank, world_size, args.vocab_size)
+        val_loader = distributed_data_generator(args.val_files, val_batch_size, rank, world_size, args.token_vocab_size)
         val_loss = 0
         with torch.no_grad():
             for _ in range(val_steps):
