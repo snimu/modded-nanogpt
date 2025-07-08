@@ -477,7 +477,7 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
 # int main
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--token-dim", type=int, default=896)
+parser.add_argument("--token-dim", type=int, default=768)
 parser.add_argument("--byte-dim", type=int, default=64)
 cli_args = parser.parse_args()
 
