@@ -214,6 +214,7 @@ def next_multiple_of_n(v: float | int, *, n: int):
     return next(x for x in range(n, int(v) + 1 + n, n) if x >= v)
 
 
+@torch.compile(dynamic=False)
 def mixin_bytes(token_embs: Tensor, byte_embs: Tensor, byte_mixin: nn.Parameter):
     # equivalent to einops.rearrange(byte_embs, "B (S bpt) D -> B S (bpt D)", bpt=16)
     B, SB, D = byte_embs.shape
@@ -223,6 +224,8 @@ def mixin_bytes(token_embs: Tensor, byte_embs: Tensor, byte_mixin: nn.Parameter)
     # concatenate token and byte embeddings
     x = torch.cat([token_embs, byte_embs], dim=-1)
     return norm(F.linear(x, byte_mixin))
+
+mixin_bytes = mixin_bytes  # make sure this function is compiled before the model -> avoids shape error
 
 class GPT(nn.Module):
     def __init__(
