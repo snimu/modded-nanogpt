@@ -502,7 +502,7 @@ class Hyperparameters:
     train_seq_len = 48*1024 # FlexAttention sequence length
     val_seq_len = 4*64*1024 # FlexAttention sequence length for validation
     # optimization
-    num_iterations = 1770 # number of iterations to run
+    num_iterations = 5960 # number of iterations to run
     cooldown_frac = 0.4 # fraction of training spent cooling down the learning rate
     # architecture
     token_vocab_size = 50257
@@ -579,7 +579,7 @@ for param in model.parameters():
 
 # collect the parameters to optimize
 hidden_matrix_params = sorted((p for p in model.blocks.parameters() if p.ndim >= 2), key=lambda x: x.size(), reverse=True)
-hidden_matrix_params.append(model.byte_mixin_weight)
+hidden_matrix_params.append(model.byte_mixin_weight)  # TODO: Put this into its own Muon & use the original Muon from train_gpt_medium.py
 embed_params = [*model.embed_tokens.parameters(), *model.embed_bytes.parameters(), *model.value_embeds.parameters()]
 scalar_params = [model.scalars]
 head_params: list[nn.Parameter] = [model.lm_head_w]
