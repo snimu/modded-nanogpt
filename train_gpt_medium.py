@@ -483,6 +483,7 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
 parser = argparse.ArgumentParser()
 parser.add_argument("--token-dim", type=int, default=768)
 parser.add_argument("--byte-dim", type=int, default=64)
+parser.add_argument("--byte-mixin-lr", type=float, default=0.025)
 cli_args = parser.parse_args()
 
 
@@ -497,6 +498,7 @@ class Hyperparameters:
     # optimization
     num_iterations = 5960 # number of iterations to run
     cooldown_frac = 0.4 # fraction of training spent cooling down the learning rate
+    byte_mixin_lr = cli_args.byte_mixin_lr # the Muon optimizer for the byte mixing layer
     # architecture
     token_vocab_size = 50257
     byte_vocab_size = 458
@@ -588,7 +590,7 @@ adam_param_groups = [dict(params=head_params, lr=1/320), dict(params=embed_param
 # discovered by @fernbear.bsky.social https://x.com/hi_tysam/status/1879692937589875094
 optimizer1 = torch.optim.AdamW(adam_param_groups, betas=(0.8, 0.95), eps=1e-10, weight_decay=0.0, fused=True)
 optimizer2 = Muon(hidden_matrix_params, lr=0.025, momentum=0.95, rank=rank, world_size=world_size)
-optimizer3 = Muon(mixin_params, lr=0.025, momentum=0.95, rank=rank, world_size=world_size)  # needs its own optimizer, or it'll error
+optimizer3 = Muon(mixin_params, lr=args.byte_mixin_lr, momentum=0.95, rank=rank, world_size=world_size)  # needs its own optimizer, or it'll error
 optimizers: list[torch.optim.Optimizer] = [optimizer1, optimizer2, optimizer3]
 def opt_params(opt: torch.optim.Optimizer) -> list[nn.Parameter]:
     return [p for group in opt.param_groups for p in group["params"]]
