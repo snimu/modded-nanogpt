@@ -308,8 +308,8 @@ class GPT(nn.Module):
         assert token_inputs.ndim == 1
 
         # MoT on value embeddings
-        ve_tokens = [value_embed(token_inputs) for value_embed in self.value_embeds_toks]
-        ve_bytes = [value_embed(byte_inputs) for value_embed in self.value_embeds_bytes]
+        ve_tokens = [value_embed(token_inputs)[None] for value_embed in self.value_embeds_toks]
+        ve_bytes = [value_embed(byte_inputs).squeeze()[None] for value_embed in self.value_embeds_bytes]
         ve = [mixin_bytes(vet, veb, vbmw) for vet, veb, vbmw in zip(ve_tokens, ve_bytes, self.value_byte_mixin_weights)]
         # 012 ... 012 structure on token value embeddings by @YouJiacheng, improved on @leloykun's U-net structure
         ve = [ve[0], ve[1], ve[2]] + [None] * (len(self.blocks) - 6) + [ve[0], ve[1], ve[2]]
@@ -653,7 +653,7 @@ del initial_state
 ########################################
 
 torch.cuda.reset_peak_memory_stats()
-train_loader = distributed_data_generator(args.train_files, world_size * args.train_seq_len, rank, world_size, args.vocab_size)
+train_loader = distributed_data_generator(args.train_files, world_size * args.train_seq_len, rank, world_size, args.token_vocab_size)
 training_time_ms = 0
 # start the clock
 dist.barrier()
@@ -672,7 +672,7 @@ for step in range(train_steps + 1):
         val_batch_size = world_size * args.val_seq_len
         assert args.val_tokens % val_batch_size == 0
         val_steps = args.val_tokens // val_batch_size
-        val_loader = distributed_data_generator(args.val_files, val_batch_size, rank, world_size, args.vocab_size)
+        val_loader = distributed_data_generator(args.val_files, val_batch_size, rank, world_size, args.token_vocab_size)
         val_loss = 0
         with torch.no_grad():
             for _ in range(val_steps):
