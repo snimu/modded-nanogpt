@@ -624,7 +624,7 @@ model: nn.Module = torch.compile(model, dynamic=False)
 warmup_steps = 10
 initial_state = copy.deepcopy(dict(model=model.state_dict(), optimizers=[opt.state_dict() for opt in optimizers]))
 for step in range(warmup_steps):
-    print0(f"warmup step: {step}/{warmup_steps}", console=True)
+    print0(f"warmup step: {step+1}/{warmup_steps}", console=True)
     token_inputs = targets = torch.randint(0, args.token_vocab_size, size=(args.train_seq_len,), device="cuda")
     byte_inputs = torch.randint(0, args.byte_vocab_size, size=(args.train_seq_len * 16,), device="cuda")
     model(token_inputs.to(torch.int32), byte_inputs.to(torch.int32), targets, get_window_size_blocks(0)).backward()
