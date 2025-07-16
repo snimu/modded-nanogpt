@@ -6,6 +6,7 @@ Changes:
 - Removed the individual embedding norms (leaving only the norm in mixin_bytes)
 - Lowered the learning rate of the byte embeddings
 - MoT via sum, not concatenation-then-FC
+- Changes to the norms
 
 I'm keeping 7_mot-in_toks-valemb.py for reproducibility.
 """
@@ -227,7 +228,7 @@ def next_multiple_of_n(v: float | int, *, n: int):
 @torch.compile(dynamic=False)
 def mixin_bytes(token_embs: Tensor, byte_embs: Tensor):
     byte_embs = torch.cat([b for b in byte_embs], dim=-1)[None]
-    return norm(token_embs + byte_embs)  # use of norm here by @Grad62304977
+    return token_embs + byte_embs
 
 mixin_bytes = mixin_bytes  # make sure this function is compiled before the model -> avoids shape error
 
@@ -309,8 +310,8 @@ class GPT(nn.Module):
         block_masks = [long_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, long_bm]
         assert len(block_masks) == len(self.blocks)
 
-        x_toks = self.embed_tokens(token_inputs)[None]
-        x_bytes = self.embed_bytes(byte_inputs).squeeze()
+        x_toks = norm(self.embed_tokens(token_inputs)[None])
+        x_bytes = norm(self.embed_bytes(byte_inputs).squeeze())
         x = x0 = mixin_bytes(x_toks, x_bytes)
 
         skip_connections = []
