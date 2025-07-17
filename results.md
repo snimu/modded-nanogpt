@@ -175,7 +175,7 @@ peak memory allocated: 50932 MiB reserved: 56000 MiB
 
 ### 71_mot-in_toks-valemb
 
-MoT as sum, more tuning of hparams
+Changed from 7: MoT as sum, more tuning of hparams
 
 peak memory allocated: 50395 MiB reserved: 55488 MiB
 step:0/5960 val_loss:10.825837 train_time:0ms step_avg:0.35ms
@@ -228,54 +228,128 @@ step:5750/5960 val_loss:2.929761 train_time:1466211ms step_avg:254.99ms
 step:5875/5960 val_loss:2.923191 train_time:1500097ms step_avg:255.34ms
 step:5960/5960 val_loss:2.920994 train_time:1523148ms step_avg:255.56ms
 
-## 72
+## 72_mot-in_toks-valemb
 
-step:0/5960 val_loss:10.825837 train_time:0ms step_avg:0.28ms
-step:125/5960 val_loss:4.435597 train_time:22394ms step_avg:179.16ms
-step:250/5960 val_loss:3.953169 train_time:44326ms step_avg:177.31ms
-step:375/5960 val_loss:3.770878 train_time:66811ms step_avg:178.16ms
-step:500/5960 val_loss:3.649857 train_time:89512ms step_avg:179.02ms
-step:625/5960 val_loss:3.568809 train_time:112392ms step_avg:179.83ms
-step:750/5960 val_loss:3.509372 train_time:135600ms step_avg:180.80ms
-step:875/5960 val_loss:3.461872 train_time:158882ms step_avg:181.58ms
-step:1000/5960 val_loss:3.423881 train_time:182378ms step_avg:182.38ms
-step:1125/5960 val_loss:3.391458 train_time:205987ms step_avg:183.10ms
-step:1250/5960 val_loss:3.367451 train_time:229649ms step_avg:183.72ms
-step:1375/5960 val_loss:3.344086 train_time:253493ms step_avg:184.36ms
-step:1500/5960 val_loss:3.325958 train_time:277417ms step_avg:184.94ms
-step:1625/5960 val_loss:3.307048 train_time:301400ms step_avg:185.48ms
-step:1750/5960 val_loss:3.290473 train_time:325366ms step_avg:185.92ms
-step:1875/5960 val_loss:3.278536 train_time:349322ms step_avg:186.31ms
-step:2000/5960 val_loss:3.262555 train_time:373284ms step_avg:186.64ms
-step:2125/5960 val_loss:3.251656 train_time:397522ms step_avg:187.07ms
-step:2250/5960 val_loss:3.242010 train_time:421760ms step_avg:187.45ms
-step:2375/5960 val_loss:3.235991 train_time:445960ms step_avg:187.77ms
-step:2500/5960 val_loss:3.223724 train_time:470155ms step_avg:188.06ms
-step:2625/5960 val_loss:3.215352 train_time:494352ms step_avg:188.32ms
-step:2750/5960 val_loss:3.208869 train_time:518559ms step_avg:188.57ms
-step:2875/5960 val_loss:3.202544 train_time:542784ms step_avg:188.79ms
-step:3000/5960 val_loss:3.195488 train_time:567012ms step_avg:189.00ms
-step:3125/5960 val_loss:3.189905 train_time:591196ms step_avg:189.18ms
-step:3250/5960 val_loss:3.184682 train_time:615399ms step_avg:189.35ms
-step:3375/5960 val_loss:3.181449 train_time:639597ms step_avg:189.51ms
-step:3500/5960 val_loss:3.176285 train_time:663767ms step_avg:189.65ms
-step:3625/5960 val_loss:3.171349 train_time:688392ms step_avg:189.90ms
-step:3750/5960 val_loss:3.156648 train_time:712506ms step_avg:190.00ms
-step:3875/5960 val_loss:3.147511 train_time:736746ms step_avg:190.13ms
-step:4000/5960 val_loss:3.133950 train_time:760958ms step_avg:190.24ms
-step:4125/5960 val_loss:3.119424 train_time:785204ms step_avg:190.35ms
-step:4250/5960 val_loss:3.107713 train_time:809471ms step_avg:190.46ms
-step:4375/5960 val_loss:3.094383 train_time:833716ms step_avg:190.56ms
-step:4500/5960 val_loss:3.082834 train_time:858116ms step_avg:190.69ms
-step:4625/5960 val_loss:3.070523 train_time:882631ms step_avg:190.84ms
-step:4750/5960 val_loss:3.058263 train_time:907172ms step_avg:190.98ms
-step:4875/5960 val_loss:3.047806 train_time:932653ms step_avg:191.31ms
-step:5000/5960 val_loss:3.034643 train_time:957346ms step_avg:191.47ms
-step:5125/5960 val_loss:3.022517 train_time:982127ms step_avg:191.63ms
-step:5250/5960 val_loss:3.010713 train_time:1008004ms step_avg:192.00ms
-step:5375/5960 val_loss:2.998448 train_time:1033032ms step_avg:192.19ms
-step:5500/5960 val_loss:2.987622 train_time:1058168ms step_avg:192.39ms
-step:5625/5960 val_loss:2.977576 train_time:1083903ms step_avg:192.69ms
-step:5750/5960 val_loss:2.968174 train_time:1109314ms step_avg:192.92ms
-step:5875/5960 val_loss:2.961214 train_time:1134960ms step_avg:193.18ms
-step:5960/5960 val_loss:2.958827 train_time:1152510ms step_avg:193.37ms
+Changed from 7: normal MoT, but changed hparams
+
+## 73_mot-in_toks-valemb
+
+Changed from 71: instead of `norm(byte_embs + token_embs)`, I'm going `norm(byte_embs) + norm(token_embs)`
+
+- Prediction: will be worse because model cannot itself determine the relative weight of token_embs and byte_embs
+
+step:0/5960 val_loss:10.825837 train_time:0ms step_avg:0.43ms
+step:125/5960 val_loss:4.367988 train_time:30225ms step_avg:241.80ms
+step:250/5960 val_loss:3.896824 train_time:59231ms step_avg:236.93ms
+step:375/5960 val_loss:3.706598 train_time:88902ms step_avg:237.07ms
+step:500/5960 val_loss:3.587277 train_time:118917ms step_avg:237.83ms
+step:625/5960 val_loss:3.509378 train_time:149194ms step_avg:238.71ms
+step:750/5960 val_loss:3.450921 train_time:179870ms step_avg:239.83ms
+step:875/5960 val_loss:3.405572 train_time:210672ms step_avg:240.77ms
+step:1000/5960 val_loss:3.365431 train_time:241741ms step_avg:241.74ms
+step:1125/5960 val_loss:3.337722 train_time:272920ms step_avg:242.60ms
+step:1250/5960 val_loss:3.309407 train_time:304119ms step_avg:243.30ms
+step:1375/5960 val_loss:3.289703 train_time:335601ms step_avg:244.07ms
+step:1500/5960 val_loss:3.267266 train_time:367159ms step_avg:244.77ms
+step:1625/5960 val_loss:3.252679 train_time:398842ms step_avg:245.44ms
+step:1750/5960 val_loss:3.236550 train_time:430508ms step_avg:246.00ms
+step:1875/5960 val_loss:3.221087 train_time:462181ms step_avg:246.50ms
+step:2000/5960 val_loss:3.210072 train_time:493850ms step_avg:246.92ms
+step:2125/5960 val_loss:3.198638 train_time:525824ms step_avg:247.45ms
+step:2250/5960 val_loss:3.187681 train_time:558309ms step_avg:248.14ms
+step:2375/5960 val_loss:3.181666 train_time:590287ms step_avg:248.54ms
+step:2500/5960 val_loss:3.174506 train_time:622277ms step_avg:248.91ms
+step:2625/5960 val_loss:3.166100 train_time:654210ms step_avg:249.22ms
+step:2750/5960 val_loss:3.160176 train_time:686144ms step_avg:249.51ms
+step:2875/5960 val_loss:3.153358 train_time:718098ms step_avg:249.77ms
+step:3000/5960 val_loss:3.148370 train_time:750102ms step_avg:250.03ms
+step:3125/5960 val_loss:3.140096 train_time:782629ms step_avg:250.44ms
+step:3250/5960 val_loss:3.134263 train_time:814549ms step_avg:250.63ms
+step:3375/5960 val_loss:3.128728 train_time:846452ms step_avg:250.80ms
+step:3500/5960 val_loss:3.124537 train_time:878442ms step_avg:250.98ms
+step:3625/5960 val_loss:3.119573 train_time:910419ms step_avg:251.15ms
+step:3750/5960 val_loss:3.109320 train_time:942365ms step_avg:251.30ms
+step:3875/5960 val_loss:3.098573 train_time:974351ms step_avg:251.45ms
+step:4000/5960 val_loss:3.084846 train_time:1006812ms step_avg:251.70ms
+step:4125/5960 val_loss:3.073712 train_time:1038788ms step_avg:251.83ms
+step:4250/5960 val_loss:3.061773 train_time:1070771ms step_avg:251.95ms
+step:4375/5960 val_loss:3.051755 train_time:1102791ms step_avg:252.07ms
+step:4500/5960 val_loss:3.039593 train_time:1135013ms step_avg:252.23ms
+step:4625/5960 val_loss:3.028240 train_time:1167300ms step_avg:252.39ms
+step:4750/5960 val_loss:3.015596 train_time:1199665ms step_avg:252.56ms
+step:4875/5960 val_loss:3.004245 train_time:1232654ms step_avg:252.85ms
+step:5000/5960 val_loss:2.992728 train_time:1265227ms step_avg:253.05ms
+step:5125/5960 val_loss:2.981490 train_time:1297879ms step_avg:253.24ms
+step:5250/5960 val_loss:2.970259 train_time:1330721ms step_avg:253.47ms
+step:5375/5960 val_loss:2.959343 train_time:1363666ms step_avg:253.71ms
+step:5500/5960 val_loss:2.949560 train_time:1396791ms step_avg:253.96ms
+step:5625/5960 val_loss:2.940128 train_time:1430131ms step_avg:254.25ms
+step:5750/5960 val_loss:2.931373 train_time:1464328ms step_avg:254.67ms
+step:5875/5960 val_loss:2.924831 train_time:1498180ms step_avg:255.01ms
+step:5960/5960 val_loss:2.922675 train_time:1521212ms step_avg:255.24ms
+peak memory allocated: 50656 MiB reserved: 55744 MiB
+
+- Is worse
+
+## 74_mot-in_toks-valemb
+
+Changed from 73: `norm(byte_embs) * scalars[-1] + norm(token_embs) * scalars[-2]`
+
+- Prediction: will be as good as 72 or better.
+  - Issue of relative weight of token_embs and byte_embs is solved
+  - But the token_embs and byte_embs themselves still get normed (which seems to have helped with tokens-only)
+
+step:0/5960 val_loss:10.825837 train_time:0ms step_avg:0.24ms
+step:125/5960 val_loss:4.335542 train_time:30196ms step_avg:241.57ms
+step:250/5960 val_loss:3.885118 train_time:59168ms step_avg:236.67ms
+step:375/5960 val_loss:3.699767 train_time:89391ms step_avg:238.38ms
+step:500/5960 val_loss:3.579392 train_time:119430ms step_avg:238.86ms
+step:625/5960 val_loss:3.500368 train_time:149736ms step_avg:239.58ms
+step:750/5960 val_loss:3.444300 train_time:180432ms step_avg:240.58ms
+step:875/5960 val_loss:3.399154 train_time:211263ms step_avg:241.44ms
+step:1000/5960 val_loss:3.360132 train_time:242365ms step_avg:242.37ms
+step:1125/5960 val_loss:3.332051 train_time:273606ms step_avg:243.21ms
+step:1250/5960 val_loss:3.306487 train_time:304905ms step_avg:243.92ms
+step:1375/5960 val_loss:3.286137 train_time:336988ms step_avg:245.08ms
+step:1500/5960 val_loss:3.263159 train_time:368594ms step_avg:245.73ms
+step:1625/5960 val_loss:3.249028 train_time:400335ms step_avg:246.36ms
+step:1750/5960 val_loss:3.232617 train_time:432051ms step_avg:246.89ms
+step:1875/5960 val_loss:3.219855 train_time:463745ms step_avg:247.33ms
+step:2000/5960 val_loss:3.207516 train_time:495485ms step_avg:247.74ms
+step:2125/5960 val_loss:3.196028 train_time:527546ms step_avg:248.26ms
+step:2250/5960 val_loss:3.186029 train_time:560090ms step_avg:248.93ms
+step:2375/5960 val_loss:3.179062 train_time:592148ms step_avg:249.33ms
+step:2500/5960 val_loss:3.172428 train_time:624179ms step_avg:249.67ms
+step:2625/5960 val_loss:3.163505 train_time:656211ms step_avg:249.99ms
+step:2750/5960 val_loss:3.157583 train_time:688180ms step_avg:250.25ms
+step:2875/5960 val_loss:3.151490 train_time:720168ms step_avg:250.49ms
+step:3000/5960 val_loss:3.146174 train_time:752223ms step_avg:250.74ms
+step:3125/5960 val_loss:3.139101 train_time:784289ms step_avg:250.97ms
+step:3250/5960 val_loss:3.132517 train_time:816282ms step_avg:251.16ms
+step:3375/5960 val_loss:3.126899 train_time:848267ms step_avg:251.34ms
+step:3500/5960 val_loss:3.121642 train_time:880335ms step_avg:251.52ms
+step:3625/5960 val_loss:3.118340 train_time:912920ms step_avg:251.84ms
+step:3750/5960 val_loss:3.108594 train_time:944959ms step_avg:251.99ms
+step:3875/5960 val_loss:3.097157 train_time:977003ms step_avg:252.13ms
+step:4000/5960 val_loss:3.083545 train_time:1009008ms step_avg:252.25ms
+step:4125/5960 val_loss:3.073040 train_time:1042079ms step_avg:252.63ms
+step:4250/5960 val_loss:3.061262 train_time:1074127ms step_avg:252.74ms
+step:4375/5960 val_loss:3.051380 train_time:1106234ms step_avg:252.85ms
+step:4500/5960 val_loss:3.038924 train_time:1138529ms step_avg:253.01ms
+step:4625/5960 val_loss:3.026996 train_time:1170876ms step_avg:253.16ms
+step:4750/5960 val_loss:3.014425 train_time:1203303ms step_avg:253.33ms
+step:4875/5960 val_loss:3.003266 train_time:1235842ms step_avg:253.51ms
+step:5000/5960 val_loss:2.991792 train_time:1268508ms step_avg:253.70ms
+step:5125/5960 val_loss:2.980501 train_time:1301221ms step_avg:253.90ms
+step:5250/5960 val_loss:2.969176 train_time:1334133ms step_avg:254.12ms
+step:5375/5960 val_loss:2.958589 train_time:1367639ms step_avg:254.44ms
+step:5500/5960 val_loss:2.948617 train_time:1400820ms step_avg:254.69ms
+step:5625/5960 val_loss:2.938975 train_time:1434238ms step_avg:254.98ms
+step:5750/5960 val_loss:2.930293 train_time:1468521ms step_avg:255.39ms
+step:5875/5960 val_loss:2.923766 train_time:1502432ms step_avg:255.73ms
+step:5960/5960 val_loss:2.921563 train_time:1525537ms step_avg:255.96ms
+peak memory allocated: 50655 MiB reserved: 55744 MiB
+
+## 75_mot-in_toks-valemb
+
+Changed from 72: Reduced token_dim to 896
