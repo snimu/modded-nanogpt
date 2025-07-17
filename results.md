@@ -232,6 +232,57 @@ step:5960/5960 val_loss:2.920994 train_time:1523148ms step_avg:255.56ms
 
 Changed from 7: normal MoT, but changed hparams
 
+step:0/5960 val_loss:10.825837 train_time:1ms step_avg:0.82ms
+step:125/5960 val_loss:4.331495 train_time:29456ms step_avg:235.64ms
+step:250/5960 val_loss:3.880548 train_time:58487ms step_avg:233.95ms
+step:375/5960 val_loss:3.694455 train_time:89708ms step_avg:239.22ms
+step:500/5960 val_loss:3.576347 train_time:119776ms step_avg:239.55ms
+step:625/5960 val_loss:3.501209 train_time:150089ms step_avg:240.14ms
+step:750/5960 val_loss:3.443439 train_time:180782ms step_avg:241.04ms
+step:875/5960 val_loss:3.400062 train_time:211641ms step_avg:241.88ms
+step:1000/5960 val_loss:3.359472 train_time:242802ms step_avg:242.80ms
+step:1125/5960 val_loss:3.333124 train_time:274124ms step_avg:243.67ms
+step:1250/5960 val_loss:3.306469 train_time:305456ms step_avg:244.36ms
+step:1375/5960 val_loss:3.284955 train_time:337031ms step_avg:245.11ms
+step:1500/5960 val_loss:3.265700 train_time:368694ms step_avg:245.80ms
+step:1625/5960 val_loss:3.251193 train_time:400444ms step_avg:246.43ms
+step:1750/5960 val_loss:3.233511 train_time:432182ms step_avg:246.96ms
+step:1875/5960 val_loss:3.219179 train_time:463900ms step_avg:247.41ms
+step:2000/5960 val_loss:3.208811 train_time:496139ms step_avg:248.07ms
+step:2125/5960 val_loss:3.196607 train_time:528224ms step_avg:248.58ms
+step:2250/5960 val_loss:3.187675 train_time:560283ms step_avg:249.01ms
+step:2375/5960 val_loss:3.180005 train_time:592387ms step_avg:249.43ms
+step:2500/5960 val_loss:3.173647 train_time:624490ms step_avg:249.80ms
+step:2625/5960 val_loss:3.164750 train_time:656595ms step_avg:250.13ms
+step:2750/5960 val_loss:3.159506 train_time:688599ms step_avg:250.40ms
+step:2875/5960 val_loss:3.153105 train_time:720646ms step_avg:250.66ms
+step:3000/5960 val_loss:3.147723 train_time:752728ms step_avg:250.91ms
+step:3125/5960 val_loss:3.139802 train_time:784821ms step_avg:251.14ms
+step:3250/5960 val_loss:3.133507 train_time:817745ms step_avg:251.61ms
+step:3375/5960 val_loss:3.129550 train_time:849757ms step_avg:251.78ms
+step:3500/5960 val_loss:3.123944 train_time:881840ms step_avg:251.95ms
+step:3625/5960 val_loss:3.120230 train_time:914801ms step_avg:252.36ms
+step:3750/5960 val_loss:3.109456 train_time:946821ms step_avg:252.49ms
+step:3875/5960 val_loss:3.099354 train_time:978898ms step_avg:252.62ms
+step:4000/5960 val_loss:3.085182 train_time:1010949ms step_avg:252.74ms
+step:4125/5960 val_loss:3.073701 train_time:1043027ms step_avg:252.86ms
+step:4250/5960 val_loss:3.062334 train_time:1075128ms step_avg:252.97ms
+step:4375/5960 val_loss:3.051455 train_time:1107227ms step_avg:253.08ms
+step:4500/5960 val_loss:3.040106 train_time:1139544ms step_avg:253.23ms
+step:4625/5960 val_loss:3.028455 train_time:1171934ms step_avg:253.39ms
+step:4750/5960 val_loss:3.015341 train_time:1204398ms step_avg:253.56ms
+step:4875/5960 val_loss:3.004114 train_time:1237799ms step_avg:253.91ms
+step:5000/5960 val_loss:2.992648 train_time:1270430ms step_avg:254.09ms
+step:5125/5960 val_loss:2.981141 train_time:1303131ms step_avg:254.27ms
+step:5250/5960 val_loss:2.970066 train_time:1336951ms step_avg:254.66ms
+step:5375/5960 val_loss:2.959095 train_time:1369966ms step_avg:254.88ms
+step:5500/5960 val_loss:2.949138 train_time:1403179ms step_avg:255.12ms
+step:5625/5960 val_loss:2.939727 train_time:1436618ms step_avg:255.40ms
+step:5750/5960 val_loss:2.930942 train_time:1470380ms step_avg:255.72ms
+step:5875/5960 val_loss:2.924364 train_time:1504318ms step_avg:256.05ms
+step:5960/5960 val_loss:2.922155 train_time:1527421ms step_avg:256.28ms
+peak memory allocated: 50690 MiB reserved: 55746 MiB
+
 ## 73_mot-in_toks-valemb
 
 Changed from 71: instead of `norm(byte_embs + token_embs)`, I'm going `norm(byte_embs) + norm(token_embs)`
