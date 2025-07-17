@@ -1,5 +1,5 @@
 """
-Variation of 7_mot-in_toks-valemb.py
+Variation of 73_mot-in_toks-valemb.py
 
 Changes:
 
@@ -256,6 +256,7 @@ class GPT(nn.Module):
             torch.ones(num_layers), # skip_weights
             *[torch.tensor([1.0, 0.0]) for _ in range(num_layers)], # block lambdas
             *[torch.tensor([0.5, 0.5]) for _ in range(num_layers)], # SA lambdas
+            torch.tensor([0.5, 0.5]), # embeddings norm lambdas
         ]))
 
     def create_blockmasks(self, input_seq: Tensor, sliding_window_num_blocks: Tensor):
@@ -310,8 +311,8 @@ class GPT(nn.Module):
         block_masks = [long_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, short_bm, short_bm, short_bm, long_bm, short_bm, short_bm, short_bm, long_bm]
         assert len(block_masks) == len(self.blocks)
 
-        x_toks = norm(self.embed_tokens(token_inputs)[None])
-        x_bytes = norm(self.embed_bytes(byte_inputs).squeeze())
+        x_toks = norm(self.embed_tokens(token_inputs)[None]) * self.scalars[-1]
+        x_bytes = norm(self.embed_bytes(byte_inputs).squeeze()) * self.scalars[-2]
         x = x0 = mixin_bytes(x_toks, x_bytes)
 
         skip_connections = []
@@ -520,8 +521,8 @@ master_process = (rank == 0) # this process will do logging, checkpointing etc.
 # begin logging
 if master_process:
     run_id_full = f"{run_id:03d}_{uuid.uuid4()}"
-    os.makedirs("logs/73_mot-in_toks-valemb", exist_ok=True)
-    logfile = f"logs/73_mot-in_toks-valemb/{run_id_full}.txt"
+    os.makedirs("logs/74_mot-in_toks-valemb", exist_ok=True)
+    logfile = f"logs/74_mot-in_toks-valemb/{run_id_full}.txt"
     print(logfile)
 def print0(s, console=False):
     if master_process:
