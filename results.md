@@ -404,3 +404,65 @@ peak memory allocated: 50655 MiB reserved: 55744 MiB
 ## 75_mot-in_toks-valemb
 
 Changed from 72: Reduced token_dim to 896
+
+- Precictions:
+  - Faster but worse
+
+step:0/5960 val_loss:10.825837 train_time:1ms step_avg:0.88ms
+step:125/5960 val_loss:4.342659 train_time:30004ms step_avg:240.03ms
+step:250/5960 val_loss:3.885411 train_time:58989ms step_avg:235.96ms
+step:375/5960 val_loss:3.698435 train_time:88655ms step_avg:236.41ms
+step:500/5960 val_loss:3.580672 train_time:118656ms step_avg:237.31ms
+step:625/5960 val_loss:3.500819 train_time:148923ms step_avg:238.28ms
+step:750/5960 val_loss:3.445923 train_time:179594ms step_avg:239.46ms
+step:875/5960 val_loss:3.402102 train_time:210376ms step_avg:240.43ms
+step:1000/5960 val_loss:3.360778 train_time:241463ms step_avg:241.46ms
+step:1125/5960 val_loss:3.332845 train_time:272704ms step_avg:242.40ms
+step:1250/5960 val_loss:3.306854 train_time:303991ms step_avg:243.19ms
+step:1375/5960 val_loss:3.285368 train_time:335525ms step_avg:244.02ms
+step:1500/5960 val_loss:3.264304 train_time:367121ms step_avg:244.75ms
+step:1625/5960 val_loss:3.249484 train_time:398836ms step_avg:245.44ms
+step:1750/5960 val_loss:3.233985 train_time:430525ms step_avg:246.01ms
+step:1875/5960 val_loss:3.219948 train_time:462186ms step_avg:246.50ms
+step:2000/5960 val_loss:3.208690 train_time:495192ms step_avg:247.60ms
+step:2125/5960 val_loss:3.197478 train_time:527206ms step_avg:248.10ms
+step:2250/5960 val_loss:3.187526 train_time:559229ms step_avg:248.55ms
+step:2375/5960 val_loss:3.179672 train_time:591765ms step_avg:249.16ms
+step:2500/5960 val_loss:3.172946 train_time:623784ms step_avg:249.51ms
+step:2625/5960 val_loss:3.164205 train_time:655791ms step_avg:249.82ms
+step:2750/5960 val_loss:3.159193 train_time:687746ms step_avg:250.09ms
+step:2875/5960 val_loss:3.152830 train_time:719723ms step_avg:250.34ms
+step:3000/5960 val_loss:3.146762 train_time:751711ms step_avg:250.57ms
+step:3125/5960 val_loss:3.138859 train_time:783779ms step_avg:250.81ms
+step:3250/5960 val_loss:3.133461 train_time:815734ms step_avg:251.00ms
+step:3375/5960 val_loss:3.128224 train_time:847693ms step_avg:251.17ms
+step:3500/5960 val_loss:3.124583 train_time:879733ms step_avg:251.35ms
+step:3625/5960 val_loss:3.119808 train_time:911765ms step_avg:251.52ms
+step:3750/5960 val_loss:3.109247 train_time:943729ms step_avg:251.66ms
+step:3875/5960 val_loss:3.097853 train_time:975771ms step_avg:251.81ms
+step:4000/5960 val_loss:3.084429 train_time:1008182ms step_avg:252.05ms
+step:4125/5960 val_loss:3.073463 train_time:1040193ms step_avg:252.17ms
+step:4250/5960 val_loss:3.061931 train_time:1072238ms step_avg:252.29ms
+step:4375/5960 val_loss:3.051660 train_time:1104313ms step_avg:252.41ms
+step:4500/5960 val_loss:3.039361 train_time:1136611ms step_avg:252.58ms
+step:4625/5960 val_loss:3.027812 train_time:1168932ms step_avg:252.74ms
+step:4750/5960 val_loss:3.014701 train_time:1201339ms step_avg:252.91ms
+step:4875/5960 val_loss:3.003585 train_time:1233803ms step_avg:253.09ms
+step:5000/5960 val_loss:2.992110 train_time:1266433ms step_avg:253.29ms
+step:5125/5960 val_loss:2.980811 train_time:1299102ms step_avg:253.48ms
+step:5250/5960 val_loss:2.969518 train_time:1332416ms step_avg:253.79ms
+step:5375/5960 val_loss:2.958428 train_time:1365371ms step_avg:254.02ms
+step:5500/5960 val_loss:2.948661 train_time:1398551ms step_avg:254.28ms
+step:5625/5960 val_loss:2.939219 train_time:1431927ms step_avg:254.56ms
+step:5750/5960 val_loss:2.930279 train_time:1465691ms step_avg:254.90ms
+step:5875/5960 val_loss:2.923700 train_time:1499588ms step_avg:255.25ms
+step:5960/5960 val_loss:2.921484 train_time:1522668ms step_avg:255.48ms
+peak memory allocated: 50607 MiB reserved: 55688 MiB
+
+- Results:
+  - Neither prediction is really true???
+
+- Next steps:
+  - Increase Batch size
+  - Tune hparams, especially for the byte_mixin
+  - Experiment with increasing the un-masked attention window for both the base & the MoT
