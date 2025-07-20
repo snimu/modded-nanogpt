@@ -463,6 +463,57 @@ peak memory allocated: 50607 MiB reserved: 55688 MiB
   - Neither prediction is really true???
 
 - Next steps:
-  - Increase Batch size
-  - Tune hparams, especially for the byte_mixin
-  - Experiment with increasing the un-masked attention window for both the base & the MoT
+  - [ ] Increase Batch size
+  - [ ] Tune hparams, especially for the byte_mixin (Prio 4)
+  - [ ] Experiment with increasing the un-masked attention window for both the base & the MoT (Prio 3)
+  - [ ] Change lr schedule (Prio 2)
+    - warmup_frac = 1 - cooldown_frac
+    - Do WD instead of SD as it is now (and not WSD, this ain't production material)
+  - [ ] Shuffle the data; maybe there's a problem where there are a bunch of tokens that suck for the MoT and that's why the curve bends so strangely? Actually that should be theory number 1, because neither the (Prio 1)
+
+## 01_train_gpt_medium
+
+Changed from 0_train_gpt_medium:
+
+- Changed from SD schedule to WD schedule
+- Increased cooldown_frac from 0.7 to 0.95
+- warmup_frac = cooldown_frac
+
+Expectations:
+
+- I'm really 50/50 if it will work better or worse than the original
+  - On the one hand, I read that WD is strictly better than SD
+  - On the other hand, modded-nanogpt is pretty well tuned already, so who knows?
+  - Also, I don't know if the WD results hold for Muon at all
+- It might work better for the MoT, if the learning rate is the cause of the strange break in the loss curve of the MoT variants
+
+...
+
+## 76_mot-in_toks-valemb
+
+Changed from 75_mot-in_toks-valemb:
+
+- Same learning rate schedule as [01_train_gpt_medium](#01_train_gpt_medium)
+
+For comparison with 01_train_gpt_medium
+
+## 02_train_gpt_medium
+
+Changed from 0_train_gpt_medium:
+
+- Randomly shuffled files (with fixed seed)
+
+Expectations:
+
+- I think that this likely won't change much
+
+## 77_mot-in_toks-valemb
+
+Changed from 75_mot-in_toks-valemb:
+
+- Randomly shuffled files (with fixed seed)
+
+Expectations:
+
+- I'm at ~80% that this will significantly change the shape of the loss curve
+- That's because my leading theory for why the plot curve looks like shit is some data problem (that I should look into later)
