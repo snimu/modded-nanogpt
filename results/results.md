@@ -466,10 +466,10 @@ peak memory allocated: 50607 MiB reserved: 55688 MiB
   - [ ] Increase Batch size
   - [ ] Tune hparams, especially for the byte_mixin (Prio 4)
   - [ ] Experiment with increasing the un-masked attention window for both the base & the MoT (Prio 3)
-  - [ ] Change lr schedule (Prio 2)
+  - [x] Change lr schedule (Prio 2)
     - warmup_frac = 1 - cooldown_frac
     - Do WD instead of SD as it is now (and not WSD, this ain't production material)
-  - [ ] Shuffle the data; maybe there's a problem where there are a bunch of tokens that suck for the MoT and that's why the curve bends so strangely? Actually that should be theory number 1, because neither the (Prio 1)
+  - [x] Shuffle the data; maybe there's a problem where there are a bunch of tokens that suck for the MoT and that's why the curve bends so strangely? Actually that should be theory number 1, because neither the (Prio 1)
 
 ## 01_train_gpt_medium
 
@@ -538,6 +538,10 @@ step:5875/5960 val_loss:2.937397 train_time:1477111ms step_avg:251.42ms
 step:5960/5960 val_loss:2.936224 train_time:1499865ms step_avg:251.66ms
 peak memory allocated: 50382 MiB reserved: 55468 MiB
 
+Results:
+
+- Clearly worse
+
 ## 76_mot-in_toks-valemb
 
 Changed from 75_mot-in_toks-valemb:
@@ -596,6 +600,10 @@ step:5750/5960 val_loss:2.961195 train_time:1470628ms step_avg:255.76ms
 step:5875/5960 val_loss:2.953348 train_time:1504570ms step_avg:256.10ms
 step:5960/5960 val_loss:2.950827 train_time:1527661ms step_avg:256.32ms
 peak memory allocated: 50607 MiB reserved: 55688 MiB
+
+Result:
+
+- Clearly worse
 
 ## 02_train_gpt_medium
 
@@ -658,6 +666,10 @@ step:5875/5960 val_loss:2.923488 train_time:1473620ms step_avg:250.83ms
 step:5960/5960 val_loss:2.922084 train_time:1496360ms step_avg:251.07ms
 peak memory allocated: 50382 MiB reserved: 55450 MiB
 
+Result:
+
+- No real difference
+
 ## 77_mot-in_toks-valemb
 
 Changed from 75_mot-in_toks-valemb:
@@ -719,3 +731,35 @@ step:5750/5960 val_loss:2.930250 train_time:1463909ms step_avg:254.59ms
 step:5875/5960 val_loss:2.923448 train_time:1497613ms step_avg:254.91ms
 step:5960/5960 val_loss:2.921168 train_time:1520749ms step_avg:255.16ms
 peak memory allocated: 50606 MiB reserved: 55670 MiB
+
+Result:
+
+- Also no real difference???
+- So it's not the data either...
+- What the hell?
+- I should:
+  1. Make sure that the files are actually shuffled
+  2. Try increasing the sequence length
+
+## 03_mot-in_toks-valemb
+
+Changed from 00:
+
+- Changed seq-len schedule to math.sqrt(x * (2 - x))
+
+Expectations:
+
+- Lower val-loss than 00 (slightly)
+- Slower than 00 (significantly)
+
+## 78_mot-in_toks-valemb
+
+Changed from 75:
+
+- Changed seq-len schedule to math.sqrt(x * (2 - x))
+
+Expectations:
+
+- Lower val-loss than 75
+- Slower than 75
+- Interesting is comparison to normal modded-nanogpt but with the new schedule
