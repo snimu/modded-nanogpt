@@ -1,98 +1,68 @@
-import re
 import matplotlib.pyplot as plt
-from typing import Literal
-
-TARGET_STEPS = 5960          # the run length we care about
-
-# ──────────────────────────────────────────────────────────────
-# 1.  Parse → {(input, valemb): [(step, t_sec, val_loss), …]}
-# ──────────────────────────────────────────────────────────────
-def _parse_results(text: str, *, target_steps: int = TARGET_STEPS):
-    """
-    Extract only the lines whose denominator == target_steps (default 5960).
-    """
-    recs = {}
-    text = text.replace('\r', '')                              # normalise NLs
-    for block in re.split(r'\n## +', text):
-        if not block.strip() or block.lstrip().startswith('#'):
-            continue
-        header, *_ = block.splitlines()
-        m = re.match(r'.*?(toks|bytes|mot)-in_(toks|bytes|mot)-valemb', header)
-        if not m:
-            continue
-        key = tuple(m.groups())
-
-        runs = [
-            (int(step), int(ms) / 1_000.0, float(vloss))       # ms → sec
-            for step, denom, vloss, ms in re.findall(
-                r'step:(\d+)/(\d+)\s+val_loss:([0-9.]+)\s+train_time:(\d+)ms',
-                block
-            )
-            if int(denom) == target_steps                      # keep only 5960
-        ]
-        if runs:                                               # skip empty sets
-            recs[key] = runs
-    return recs
+import math
 
 
-# ──────────────────────────────────────────────────────────────
-# 2.  Plotting helper
-# ──────────────────────────────────────────────────────────────
-def plot_val_loss(
-    results_text: str,
-    *,
-    input=None,                       # 'mot' | 'bytes' | 'toks' | list | None
-    valemb=None,                      # same as input
-    plot_over: Literal["step", "time"] = "step",
-):
-    """Plot validation-loss curves, colour = input, linestyle = Value-Embedding."""
-    pretty = dict(mot="MoT", bytes="Bytes", toks="Tokens")
+def next_multiple_of_n(v: float | int, *, n: int):
+    return next(x for x in range(n, int(v) + 1 + n, n) if x >= v)
 
-    # colour-blind–safe palette (Paul Tol, “bright”)
-    colour = {'mot': '#0072B2', 'bytes': '#D55E00', 'toks': '#009E73'}
 
-    style  = {'mot': '--', 'bytes': ':', 'toks': '-'}
+def get_window_size_blocks(step: int, *, max_window_size: int = 3456, step_size: int = 128):
+    x = step / 5960 # progress in training
+    assert 0 <= x <= 1
+    # Linearly increase the block-wise sliding window size over training 128 -> 1792
+    # increase by @fernbear.bsky.social; block-wise by @YouJiacheng
+    # factor = 4 * x ** 3 - 6 * x ** 2 + 3 * x # cubic schedule by @jadenj3o
+    # factor = 5 * x ** 3 - 6 * x ** 2 + 3 * x # cubic schedule by @jadenj3o
+    factor = math.sqrt(x * (2 - x))
+    return next_multiple_of_n(max_window_size * factor, n=step_size)
 
-    recs = _parse_results(results_text)
 
-    mkset = lambda x: None if x is None else {x} if isinstance(x, str) else set(x)
-    keep_inp, keep_emb = map(mkset, (input, valemb))
+def get_lr(step: int, *, num_iterations: int = 5960, cooldown_frac: float = 0.7):
+    x = step / num_iterations # progress in training
+    assert 0 <= x < 1
+    if x < 1 - cooldown_frac:
+        return 1.0
+    else:
+        return (1 - x) / cooldown_frac
 
-    keys = [
-        k for k in recs
-        if (keep_inp is None or k[0] in keep_inp)
-        and (keep_emb is None or k[1] in keep_emb)
-    ]
-    if not keys:
-        raise ValueError("No runs match the given filters (or no 5960-step data).")
-
-    plt.figure(figsize=(10, 6))
-    for inp, emb in sorted(keys):
-        steps, secs, losses = zip(*recs[(inp, emb)])
-        x = steps if plot_over == "step" else secs
-        plt.plot(
-            x, losses,
-            label=f"{pretty[inp]} Input, {pretty[emb]} Value Embeddings",
-            color=colour[inp],
-            linestyle=style[emb],
-            linewidth=2,
-        )
-
-    plt.title(f"Validation Loss – {TARGET_STEPS}-step Runs")
-    plt.xlabel("Step" if plot_over == "step" else "Training Time (s)")
-    plt.ylabel("Validation Loss")
-    plt.grid(True, alpha=0.3)
+def plot_hparams():
+    x = list(range(5960))
+    max_window_size: int = 3456
+    ws = [get_window_size_blocks(i) / max_window_size for i in x]
+    plt.plot(x, ws, label="window size")
+    lr = [get_lr(i) for i in x]
+    plt.plot(x, lr, label="learning rate")
     plt.legend()
-    plt.tight_layout()
+    plt.grid()
     plt.show()
 
 
-
-def main():
-    with open("results.md", "r") as f:
-        results_text = f.read()
-    plot_val_loss(results_text, plot_over='time', input=['mot', 'toks'], valemb=['mot', 'toks'])
+def plot_results(header_numbers: list[int | str], filename: str, x_axis: str = "step"):
+    with open(filename, "r") as f:
+        lines = f.readlines()
+    
+    parsed = {hnum: {"step": [], "time": [], "loss": []} for hnum in header_numbers}
+    for hnum in header_numbers:
+        extract= False
+        for line in lines:
+            if line.startswith(f"## {hnum}_"):
+                extract = True
+                continue
+            if extract and line.startswith("##"):
+                break
+            if extract and line.startswith("step:"):
+                parsed[hnum]["loss"].append(float(line.split()[1].split("val_loss:")[-1]))
+                parsed[hnum]["step"].append(int(line.split("step:")[1].split("/")[0]))
+                parsed[hnum]["time"].append(float(line.split("train_time:")[1].split("ms")[0]) / 1000)
+    
+    for hnum in header_numbers:
+        plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"], label=f"{hnum}")
+    plt.xlabel("step" if x_axis == "step" else "time (s)")
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 
 if __name__ == "__main__":
-    main()
+    # plot_hparams()
+    plot_results([0, "03", 78], "results.md", x_axis="step")
