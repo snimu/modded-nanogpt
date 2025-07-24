@@ -481,8 +481,8 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
                 pad_byte=456,
                 eot_byte=457,
             ).view(16, -1).contiguous()
-            num_pads_before = torch.where(byte_tensor == 456).numel()  # number of pad bytes in the raw bytes
-            num_pads_after = torch.where(byte_inputs == 456).numel()  # number of pad bytes in the pulled bytes
+            num_pads_before = torch.where(byte_tensor == 456)[0].numel()  # number of pad bytes in the raw bytes
+            num_pads_after = torch.where(byte_inputs == 456)[0].numel()  # number of pad bytes in the pulled bytes
             num_pulled = num_pads_before - num_pads_after  # number of pulled bytes is the number of pad bytes in the raw bytes replaced by non-pad bytes
             num_blocked = num_pads_after  # only pad bytes remaining are ones blocking context between texts in the batch
             num_total = byte_tensor.numel()  # total number of bytes in this batch
@@ -689,7 +689,7 @@ for step in range(train_steps + 1):
         val_loss /= val_steps
         del val_loader
         dist.all_reduce(val_loss, op=dist.ReduceOp.AVG)
-        print0(f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/max(step, 1):.2f}ms total_bytes:{total_bytes:_} total_pulled:{total_pulled} total_blocked:{total_blocked}", console=True)
+        print0(f"step:{step}/{train_steps} val_loss:{val_loss:.6f} train_time:{training_time_ms:.0f}ms step_avg:{training_time_ms/max(step, 1):.2f}ms crnt_file:{crnt_file} total_bytes:{total_bytes:_} total_pulled:{total_pulled:_} total_blocked:{total_blocked:_}", console=True)
         model.train()
         # reset the counters
         total_bytes = total_pulled = total_blocked = 0
@@ -710,6 +710,7 @@ for step in range(train_steps + 1):
     total_bytes += num_total
     total_pulled += num_pulled
     total_blocked += num_blocked
+    crnt_file = crnt_file.split("/")[-1].split(".")[0].split("_")[-1]
     model(token_inputs, byte_inputs, targets, get_window_size_blocks(step)).backward()
     opt2futures = {
         opt: [dist.all_reduce(p.grad, op=dist.ReduceOp.AVG, async_op=True).get_future() for p in params]
