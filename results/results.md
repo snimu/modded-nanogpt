@@ -924,3 +924,5 @@ Next steps (in no particular order):
   - So many bytes are pulled that it might hurt
   - On the other hand, doing it more might give more of an advantage
 - [ ] Decrease token_dim (and maybe byte_dim too?) but increase expansion factor in MLP.
+- [ ] `token_dim=512, byte_dim=32`; then only concatenate, no sum or FC layer
+  - This should lead to a very clean gradient to both the token- and byte-embeddings
