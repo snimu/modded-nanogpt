@@ -865,3 +865,73 @@ step:5750/5960 val_loss:2.930494 train_time:1507601ms step_avg:262.19ms
 step:5875/5960 val_loss:2.924212 train_time:1541269ms step_avg:262.34ms
 step:5960/5960 val_loss:2.922168 train_time:1564110ms step_avg:262.43ms
 peak memory allocated: 50607 MiB reserved: 55688 MiB
+
+## 79_mot-in_toks_valemb
+
+Changed from 77:
+
+- Log current file (from dataloader), total_bytes, pulled_bytes, blocked_bytes
+
+step:0/5960 val_loss:10.825837 train_time:1ms step_avg:0.94ms crnt_file:None total_bytes:0 total_pulled:0 total_blocked:0
+step:125/5960 val_loss:4.357212 train_time:32467ms step_avg:259.73ms crnt_file:084 total_bytes:131_072_000 total_pulled:94_552_790 total_blocked:3_226
+step:250/5960 val_loss:3.891635 train_time:64550ms step_avg:258.20ms crnt_file:062 total_bytes:131_072_000 total_pulled:94_555_543 total_blocked:3_148
+step:375/5960 val_loss:3.706735 train_time:97536ms step_avg:260.10ms crnt_file:062 total_bytes:131_072_000 total_pulled:94_697_361 total_blocked:3_099
+step:500/5960 val_loss:3.591684 train_time:131300ms step_avg:262.60ms crnt_file:069 total_bytes:131_072_000 total_pulled:94_701_150 total_blocked:3_358
+step:625/5960 val_loss:3.512107 train_time:165434ms step_avg:264.70ms crnt_file:103 total_bytes:131_072_000 total_pulled:94_681_477 total_blocked:3_182
+step:750/5960 val_loss:3.449901 train_time:200008ms step_avg:266.68ms crnt_file:032 total_bytes:131_072_000 total_pulled:94_763_885 total_blocked:3_258
+step:875/5960 val_loss:3.404677 train_time:234730ms step_avg:268.26ms crnt_file:036 total_bytes:131_072_000 total_pulled:94_744_719 total_blocked:3_134
+step:1000/5960 val_loss:3.367547 train_time:270258ms step_avg:270.26ms crnt_file:036 total_bytes:131_072_000 total_pulled:94_668_136 total_blocked:3_160
+step:1125/5960 val_loss:3.336835 train_time:305417ms step_avg:271.48ms crnt_file:005 total_bytes:131_072_000 total_pulled:94_775_880 total_blocked:3_204
+step:1250/5960 val_loss:3.315317 train_time:340669ms step_avg:272.54ms crnt_file:043 total_bytes:131_072_000 total_pulled:94_701_003 total_blocked:3_085
+step:1375/5960 val_loss:3.286720 train_time:376311ms step_avg:273.68ms crnt_file:043 total_bytes:131_072_000 total_pulled:94_665_086 total_blocked:3_287
+step:1500/5960 val_loss:3.267855 train_time:411937ms step_avg:274.62ms crnt_file:061 total_bytes:131_072_000 total_pulled:94_679_859 total_blocked:3_114
+step:1625/5960 val_loss:3.251130 train_time:447682ms step_avg:275.50ms crnt_file:061 total_bytes:131_072_000 total_pulled:94_776_064 total_blocked:2_904
+step:1750/5960 val_loss:3.239556 train_time:483403ms step_avg:276.23ms crnt_file:093 total_bytes:131_072_000 total_pulled:94_600_347 total_blocked:3_030
+step:1875/5960 val_loss:3.227079 train_time:518972ms step_avg:276.79ms crnt_file:095 total_bytes:131_072_000 total_pulled:94_558_421 total_blocked:3_056
+step:2000/5960 val_loss:3.214458 train_time:554733ms step_avg:277.37ms crnt_file:095 total_bytes:131_072_000 total_pulled:94_585_496 total_blocked:3_183
+step:2125/5960 val_loss:3.202274 train_time:590499ms step_avg:277.88ms crnt_file:025 total_bytes:131_072_000 total_pulled:94_656_890 total_blocked:3_042
+step:2250/5960 val_loss:3.191844 train_time:626512ms step_avg:278.45ms crnt_file:055 total_bytes:131_072_000 total_pulled:94_741_620 total_blocked:2_903
+step:2375/5960 val_loss:3.182337 train_time:662287ms step_avg:278.86ms crnt_file:055 total_bytes:131_072_000 total_pulled:94_779_320 total_blocked:3_233
+step:2500/5960 val_loss:3.175319 train_time:698135ms step_avg:279.25ms crnt_file:098 total_bytes:131_072_000 total_pulled:94_576_964 total_blocked:3_201
+step:2625/5960 val_loss:3.165110 train_time:734024ms step_avg:279.63ms crnt_file:034 total_bytes:131_072_000 total_pulled:94_683_609 total_blocked:3_024
+step:2750/5960 val_loss:3.160709 train_time:769988ms step_avg:280.00ms crnt_file:034 total_bytes:131_072_000 total_pulled:94_662_386 total_blocked:3_177
+step:2875/5960 val_loss:3.153110 train_time:805760ms step_avg:280.26ms crnt_file:054 total_bytes:131_072_000 total_pulled:94_582_036 total_blocked:2_843
+step:3000/5960 val_loss:3.146742 train_time:841667ms step_avg:280.56ms crnt_file:046 total_bytes:131_072_000 total_pulled:94_664_824 total_blocked:3_297
+step:3125/5960 val_loss:3.141373 train_time:877483ms step_avg:280.79ms crnt_file:046 total_bytes:131_072_000 total_pulled:94_755_904 total_blocked:3_253
+step:3250/5960 val_loss:3.138342 train_time:913366ms step_avg:281.04ms crnt_file:066 total_bytes:131_072_000 total_pulled:94_671_513 total_blocked:3_450
+step:3375/5960 val_loss:3.134350 train_time:949199ms step_avg:281.24ms crnt_file:042 total_bytes:131_072_000 total_pulled:94_855_834 total_blocked:3_511
+step:3500/5960 val_loss:3.129660 train_time:985049ms step_avg:281.44ms crnt_file:042 total_bytes:131_072_000 total_pulled:94_761_684 total_blocked:3_316
+step:3625/5960 val_loss:3.121796 train_time:1020765ms step_avg:281.59ms crnt_file:019 total_bytes:131_072_000 total_pulled:94_791_817 total_blocked:3_075
+step:3750/5960 val_loss:3.111989 train_time:1056610ms step_avg:281.76ms crnt_file:009 total_bytes:131_072_000 total_pulled:94_733_855 total_blocked:3_209
+step:3875/5960 val_loss:3.097421 train_time:1092578ms step_avg:281.96ms crnt_file:009 total_bytes:131_072_000 total_pulled:94_763_953 total_blocked:3_118
+step:4000/5960 val_loss:3.092124 train_time:1128443ms step_avg:282.11ms crnt_file:073 total_bytes:131_072_000 total_pulled:94_623_300 total_blocked:3_213
+step:4125/5960 val_loss:3.075680 train_time:1164402ms step_avg:282.28ms crnt_file:041 total_bytes:131_072_000 total_pulled:94_596_295 total_blocked:3_463
+step:4250/5960 val_loss:3.063876 train_time:1200017ms step_avg:282.36ms crnt_file:041 total_bytes:131_072_000 total_pulled:94_634_518 total_blocked:3_218
+step:4375/5960 val_loss:3.052943 train_time:1235825ms step_avg:282.47ms crnt_file:100 total_bytes:131_072_000 total_pulled:94_757_401 total_blocked:3_469
+step:4500/5960 val_loss:3.040985 train_time:1271895ms step_avg:282.64ms crnt_file:027 total_bytes:131_072_000 total_pulled:94_735_200 total_blocked:2_888
+step:4625/5960 val_loss:3.028454 train_time:1307951ms step_avg:282.80ms crnt_file:027 total_bytes:131_072_000 total_pulled:94_781_110 total_blocked:3_164
+step:4750/5960 val_loss:3.016740 train_time:1343961ms step_avg:282.94ms crnt_file:092 total_bytes:131_072_000 total_pulled:94_643_166 total_blocked:2_969
+step:4875/5960 val_loss:3.006371 train_time:1380010ms step_avg:283.08ms crnt_file:045 total_bytes:131_072_000 total_pulled:94_747_546 total_blocked:3_056
+step:5000/5960 val_loss:2.993924 train_time:1416545ms step_avg:283.31ms crnt_file:045 total_bytes:131_072_000 total_pulled:94_733_443 total_blocked:3_242
+step:5125/5960 val_loss:2.982858 train_time:1452945ms step_avg:283.50ms crnt_file:047 total_bytes:131_072_000 total_pulled:94_650_465 total_blocked:3_188
+step:5250/5960 val_loss:2.971291 train_time:1489576ms step_avg:283.73ms crnt_file:053 total_bytes:131_072_000 total_pulled:94_751_361 total_blocked:3_090
+step:5375/5960 val_loss:2.960778 train_time:1526464ms step_avg:283.99ms crnt_file:053 total_bytes:131_072_000 total_pulled:94_892_954 total_blocked:3_519
+step:5500/5960 val_loss:2.950072 train_time:1563442ms step_avg:284.26ms crnt_file:060 total_bytes:131_072_000 total_pulled:94_657_735 total_blocked:3_171
+step:5625/5960 val_loss:2.940291 train_time:1600356ms step_avg:284.51ms crnt_file:088 total_bytes:131_072_000 total_pulled:94_636_788 total_blocked:2_779
+step:5750/5960 val_loss:2.931255 train_time:1637199ms step_avg:284.73ms crnt_file:088 total_bytes:131_072_000 total_pulled:94_547_331 total_blocked:2_929
+step:5875/5960 val_loss:2.924458 train_time:1674385ms step_avg:285.00ms crnt_file:039 total_bytes:131_072_000 total_pulled:94_742_708 total_blocked:3_281
+step:5960/5960 val_loss:2.922133 train_time:1699641ms step_avg:285.17ms crnt_file:039 total_bytes:89_128_960 total_pulled:64_450_324 total_blocked:1_997
+
+![79-byte-stats](images/79-byte-stats.png)
+
+- All the byte stats are very consistent (the lower values at the start and end are just because the number of steps in between is lower, which I didn't correct for)
+- The number of pulled bytes is consistently at slightly above 70% of the total bytes
+- The number of blocked bytes is around 0.0025%
+- The files are actually shuffled
+- So my favorite hypothesis of something being wrong with the data is disproven; which is very good in a sense, but bad in another because now I don't know what to fix
+
+Next steps (in no particular order):
+
+- [ ] Do MoT by addition, but apply linear layer to the bytes before so that they can be mixed
+- [ ] Zero-init bytes?
+- [ ] Try it with `bpt=8, byte_dim=128` and `bpt=32, byte_dim=32`

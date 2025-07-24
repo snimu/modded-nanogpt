@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import math
+import numpy as np
 
 
 def next_multiple_of_n(v: float | int, *, n: int):
@@ -63,6 +64,37 @@ def plot_results(header_numbers: list[int | str], filename: str, x_axis: str = "
     plt.show()
 
 
+def plot_byte_stats(header_numbers: list[int | str], filename: str, x_axis: str = "step"):
+    with open(filename, "r") as f:
+        lines = f.readlines()
+    
+    parsed = {hnum: {"step": [], "bytes_total": [], "bytes_pulled": [], "bytes_blocked": []} for hnum in header_numbers}
+    for hnum in header_numbers:
+        extract= False
+        for line in lines:
+            if line.startswith(f"## {hnum}_"):
+                extract = True
+                continue
+            if extract and line.startswith("##"):
+                break
+            if extract and line.startswith("step:"):
+                parsed[hnum]["bytes_total"].append(int(line.split("total_bytes:")[1].split(" ")[0].replace("_", "")))
+                parsed[hnum]["bytes_pulled"].append(int(line.split("total_pulled:")[1].split(" ")[0].replace("_", "")))
+                parsed[hnum]["bytes_blocked"].append(int(line.split("total_blocked:")[1].split(" ")[0].replace("_", "")))
+                parsed[hnum]["step"].append(int(line.split("step:")[1].split("/")[0]))
+
+    for hnum in header_numbers:
+        plt.plot(parsed[hnum][x_axis], np.array(parsed[hnum]["bytes_total"]) / max(parsed[hnum]["bytes_total"]), label=f"{hnum}: total")
+        plt.plot(parsed[hnum][x_axis], np.array(parsed[hnum]["bytes_pulled"]) / max(parsed[hnum]["bytes_total"]), label=f"{hnum}: pulled")
+        plt.plot(parsed[hnum][x_axis], np.array(parsed[hnum]["bytes_blocked"]) / max(parsed[hnum]["bytes_total"]), label=f"{hnum}: blocked")
+    plt.xlabel("step" if x_axis == "step" else "time (s)")
+    plt.legend()
+    plt.title("Byte stats: total, pulled, blocked")
+    plt.grid()
+    plt.show()
+
+
 if __name__ == "__main__":
     # plot_hparams()
-    plot_results([0, "03", 78], "results.md", x_axis="step")
+    # plot_results([0, "03", 78], "results.md", x_axis="step")
+    plot_byte_stats([79], "results.md", x_axis="step")
