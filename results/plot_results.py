@@ -12,9 +12,9 @@ def get_window_size_blocks(step: int, *, max_window_size: int = 3456, step_size:
     assert 0 <= x <= 1
     # Linearly increase the block-wise sliding window size over training 128 -> 1792
     # increase by @fernbear.bsky.social; block-wise by @YouJiacheng
-    # factor = 4 * x ** 3 - 6 * x ** 2 + 3 * x # cubic schedule by @jadenj3o
+    factor = 4 * x ** 3 - 6 * x ** 2 + 3 * x # cubic schedule by @jadenj3o
     # factor = 5 * x ** 3 - 6 * x ** 2 + 3 * x # cubic schedule by @jadenj3o
-    factor = math.sqrt(x * (2 - x))
+    # factor = math.sqrt(x * (2 - x))
     return next_multiple_of_n(max_window_size * factor, n=step_size)
 
 
@@ -30,18 +30,30 @@ def plot_hparams():
     x = list(range(5960))
     max_window_size: int = 3456
     ws = [get_window_size_blocks(i) / max_window_size for i in x]
-    plt.plot(x, ws, label="window size")
+    plt.plot(x, ws, label="train seq len")
     lr = [get_lr(i) for i in x]
     plt.plot(x, lr, label="learning rate")
+    plt.xlabel("step")
+    plt.ylabel(r"% of maximum")
     plt.legend()
     plt.grid()
     plt.show()
 
 
-def plot_results(header_numbers: list[int | str], filename: str, x_axis: str = "step"):
+def plot_results(
+        header_numbers: list[int | str] | dict[int | str, str],
+        filename: str,
+        x_axis: str = "step",
+):
     with open(filename, "r") as f:
         lines = f.readlines()
-    
+
+    if isinstance(header_numbers, dict):
+        descriptions = list(header_numbers.values())
+        header_numbers = list(header_numbers.keys())
+    else:
+        descriptions = ["" for _ in header_numbers]
+
     parsed = {hnum: {"step": [], "time": [], "loss": []} for hnum in header_numbers}
     for hnum in header_numbers:
         extract= False
@@ -56,9 +68,11 @@ def plot_results(header_numbers: list[int | str], filename: str, x_axis: str = "
                 parsed[hnum]["step"].append(int(line.split("step:")[1].split("/")[0]))
                 parsed[hnum]["time"].append(float(line.split("train_time:")[1].split("ms")[0]) / 1000)
     
-    for hnum in header_numbers:
-        plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"], label=f"{hnum}")
+    for i, hnum in enumerate(header_numbers):
+        description = f": {descriptions[i]}" if descriptions[i] else ""
+        plt.plot(parsed[hnum][x_axis], parsed[hnum]["loss"], label=f"{hnum}{description}")
     plt.xlabel("step" if x_axis == "step" else "time (s)")
+    plt.ylabel("val_loss")
     plt.legend()
     plt.grid()
     plt.show()
@@ -95,6 +109,21 @@ def plot_byte_stats(header_numbers: list[int | str], filename: str, x_axis: str 
 
 
 if __name__ == "__main__":
-    # plot_hparams()
-    # plot_results([0, "03", 78], "results.md", x_axis="step")
-    plot_byte_stats([79], "results.md", x_axis="step")
+    plot_hparams()
+    # plot_results(
+    #     [1, 7],
+    #     # {
+    #     #     1: "baseline",
+    #     #     # 7: "MoT",
+    #     #     # 71: "MoT-sum",
+    #     #     # 72: "MoT, hparams",
+    #     #     # 73: "MoT-sum, norm-then-sum",
+    #     #     # 74: "MoT-sum, norm-then-sum with lambdas",
+    #     #     # 75: "MoT, hparams, token_dim=896",
+    #     #     # "03": "baseline, seq-len schedule",
+    #     #     # 78: "MoT, hparams, token_dim=896, seq-len schedule",
+    #     # },
+    #     filename="results.md",
+    #     x_axis="step",
+    # )
+    # plot_byte_stats([79], "results.md", x_axis="step")

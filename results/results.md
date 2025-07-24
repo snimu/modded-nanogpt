@@ -106,16 +106,6 @@ step:5750/5960 val_loss:2.925142 train_time:1440361ms step_avg:250.50ms
 step:5875/5960 val_loss:2.920990 train_time:1473715ms step_avg:250.85ms
 step:5960/5960 val_loss:2.919627 train_time:1496464ms step_avg:251.08ms
 
-## 2_toks-in_bytes-valemb
-
-## 3_toks-in_mot-valemb
-
-## 4_bytes-in_toks-valemb
-
-## 5_bytes-in_bytes-valemb
-
-## 6_bytes-in_mot-valemb
-
 ## 7_mot-in_toks-valemb
 
 step:0/5960 val_loss:10.825837 train_time:1ms step_avg:0.56ms
@@ -169,15 +159,10 @@ step:5875/5960 val_loss:2.922787 train_time:1532347ms step_avg:260.83ms
 step:5960/5960 val_loss:2.920585 train_time:1555443ms step_avg:260.98ms
 peak memory allocated: 50932 MiB reserved: 56000 MiB
 
-## 8_mot-in_bytes-valemb
-
-## 9_mot-in_mot-valemb
-
-### 71_mot-in_toks-valemb
+## 71_mot-in_toks-valemb
 
 Changed from 7: MoT as sum, more tuning of hparams
 
-peak memory allocated: 50395 MiB reserved: 55488 MiB
 step:0/5960 val_loss:10.825837 train_time:0ms step_avg:0.35ms
 step:125/5960 val_loss:4.339107 train_time:29389ms step_avg:235.11ms
 step:250/5960 val_loss:3.893819 train_time:59390ms step_avg:237.56ms
@@ -227,6 +212,7 @@ step:5625/5960 val_loss:2.938365 train_time:1432512ms step_avg:254.67ms
 step:5750/5960 val_loss:2.929761 train_time:1466211ms step_avg:254.99ms
 step:5875/5960 val_loss:2.923191 train_time:1500097ms step_avg:255.34ms
 step:5960/5960 val_loss:2.920994 train_time:1523148ms step_avg:255.56ms
+peak memory allocated: 50395 MiB reserved: 55488 MiB
 
 ## 72_mot-in_toks-valemb
 
@@ -935,3 +921,6 @@ Next steps (in no particular order):
 - [ ] Do MoT by addition, but apply linear layer to the bytes before so that they can be mixed
 - [ ] Zero-init bytes?
 - [ ] Try it with `bpt=8, byte_dim=128` and `bpt=32, byte_dim=32`
+  - So many bytes are pulled that it might hurt
+  - On the other hand, doing it more might give more of an advantage
+- [ ] Decrease token_dim (and maybe byte_dim too?) but increase expansion factor in MLP.
