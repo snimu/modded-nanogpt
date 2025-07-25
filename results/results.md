@@ -428,33 +428,7 @@ step:5875/5960 val_loss:2.923700 train_time:1499588ms step_avg:255.25ms
 step:5960/5960 val_loss:2.921484 train_time:1522668ms step_avg:255.48ms
 peak memory allocated: 50607 MiB reserved: 55688 MiB
 
-- Results:
-  - Neither prediction is really true???
-
-- Next steps:
-  - [ ] Increase Batch size
-  - [ ] Tune hparams, especially for the byte_mixin (Prio 4)
-  - [ ] Experiment with increasing the un-masked attention window for both the base & the MoT (Prio 3)
-  - [x] Change lr schedule (Prio 2)
-    - warmup_frac = 1 - cooldown_frac
-    - Do WD instead of SD as it is now (and not WSD, this ain't production material)
-  - [x] Shuffle the data; maybe there's a problem where there are a bunch of tokens that suck for the MoT and that's why the curve bends so strangely? Actually that should be theory number 1, because neither the (Prio 1)
-
 ## 01_train_gpt_medium
-
-Changed from 0_train_gpt_medium:
-
-- Changed from SD schedule to WD schedule
-- Increased cooldown_frac from 0.7 to 0.95
-- warmup_frac = cooldown_frac
-
-Expectations:
-
-- I'm really 50/50 if it will work better or worse than the original
-  - On the one hand, I read that WD is strictly better than SD
-  - On the other hand, modded-nanogpt is pretty well tuned already, so who knows?
-  - Also, I don't know if the WD results hold for Muon at all
-- It might work better for the MoT, if the learning rate is the cause of the strange break in the loss curve of the MoT variants
 
 step:0/5960 val_loss:10.825837 train_time:0ms step_avg:0.46ms
 step:125/5960 val_loss:5.116404 train_time:28391ms step_avg:227.13ms
@@ -507,17 +481,7 @@ step:5875/5960 val_loss:2.937397 train_time:1477111ms step_avg:251.42ms
 step:5960/5960 val_loss:2.936224 train_time:1499865ms step_avg:251.66ms
 peak memory allocated: 50382 MiB reserved: 55468 MiB
 
-Results:
-
-- Clearly worse
-
 ## 76_mot-in_toks-valemb
-
-Changed from 75_mot-in_toks-valemb:
-
-- Same learning rate schedule as [01_train_gpt_medium](#01_train_gpt_medium)
-
-For comparison with 01_train_gpt_medium
 
 step:0/5960 val_loss:10.825837 train_time:1ms step_avg:0.56ms
 step:125/5960 val_loss:7.182709 train_time:29218ms step_avg:233.74ms
@@ -570,19 +534,7 @@ step:5875/5960 val_loss:2.953348 train_time:1504570ms step_avg:256.10ms
 step:5960/5960 val_loss:2.950827 train_time:1527661ms step_avg:256.32ms
 peak memory allocated: 50607 MiB reserved: 55688 MiB
 
-Result:
-
-- Clearly worse
-
 ## 02_train_gpt_medium
-
-Changed from 0_train_gpt_medium:
-
-- Randomly shuffled files (with fixed seed)
-
-Expectations:
-
-- I think that this likely won't change much
 
 step:0/5960 val_loss:10.825837 train_time:1ms step_avg:1.26ms
 step:125/5960 val_loss:4.344897 train_time:28547ms step_avg:228.38ms
@@ -635,20 +587,7 @@ step:5875/5960 val_loss:2.923488 train_time:1473620ms step_avg:250.83ms
 step:5960/5960 val_loss:2.922084 train_time:1496360ms step_avg:251.07ms
 peak memory allocated: 50382 MiB reserved: 55450 MiB
 
-Result:
-
-- No real difference
-
 ## 77_mot-in_toks-valemb
-
-Changed from 75_mot-in_toks-valemb:
-
-- Randomly shuffled files (with fixed seed)
-
-Expectations:
-
-- I'm at ~80% that this will significantly change the shape of the loss curve
-- That's because my leading theory for why the plot curve looks like shit is some data problem (that I should look into later)
 
 step:0/5960 val_loss:10.825837 train_time:1ms step_avg:0.54ms
 step:125/5960 val_loss:4.361783 train_time:29755ms step_avg:238.04ms
@@ -701,25 +640,7 @@ step:5875/5960 val_loss:2.923448 train_time:1497613ms step_avg:254.91ms
 step:5960/5960 val_loss:2.921168 train_time:1520749ms step_avg:255.16ms
 peak memory allocated: 50606 MiB reserved: 55670 MiB
 
-Result:
-
-- Also no real difference???
-- So it's not the data either...
-- What the hell?
-- I should:
-  1. Make sure that the files are actually shuffled
-  2. Try increasing the sequence length
-
 ## 03_mot-in_toks-valemb
-
-Changed from 00:
-
-- Changed seq-len schedule to math.sqrt(x * (2 - x))
-
-Expectations:
-
-- Lower val-loss than 00 (slightly)
-- Slower than 00 (significantly)
 
 step:0/5960 val_loss:10.825837 train_time:0ms step_avg:0.26ms
 step:125/5960 val_loss:4.196456 train_time:28838ms step_avg:230.71ms
@@ -774,16 +695,6 @@ peak memory allocated: 50382 MiB reserved: 55468 MiB
 
 ## 78_mot-in_toks-valemb
 
-Changed from 75:
-
-- Changed seq-len schedule to math.sqrt(x * (2 - x))
-
-Expectations:
-
-- Lower val-loss than 75
-- Slower than 75
-- Interesting is comparison to normal modded-nanogpt but with the new schedule
-
 step:0/5960 val_loss:10.825837 train_time:1ms step_avg:0.82ms
 step:125/5960 val_loss:4.215150 train_time:29870ms step_avg:238.96ms
 step:250/5960 val_loss:3.828819 train_time:60014ms step_avg:240.06ms
@@ -837,10 +748,6 @@ peak memory allocated: 50607 MiB reserved: 55688 MiB
 
 ## 79_mot-in_toks_valemb
 
-Changed from 77:
-
-- Log current file (from dataloader), total_bytes, pulled_bytes, blocked_bytes
-
 step:0/5960 val_loss:10.825837 train_time:1ms step_avg:0.94ms crnt_file:None total_bytes:0 total_pulled:0 total_blocked:0
 step:125/5960 val_loss:4.357212 train_time:32467ms step_avg:259.73ms crnt_file:084 total_bytes:131_072_000 total_pulled:94_552_790 total_blocked:3_226
 step:250/5960 val_loss:3.891635 train_time:64550ms step_avg:258.20ms crnt_file:062 total_bytes:131_072_000 total_pulled:94_555_543 total_blocked:3_148
@@ -891,21 +798,4 @@ step:5750/5960 val_loss:2.931255 train_time:1637199ms step_avg:284.73ms crnt_fil
 step:5875/5960 val_loss:2.924458 train_time:1674385ms step_avg:285.00ms crnt_file:039 total_bytes:131_072_000 total_pulled:94_742_708 total_blocked:3_281
 step:5960/5960 val_loss:2.922133 train_time:1699641ms step_avg:285.17ms crnt_file:039 total_bytes:89_128_960 total_pulled:64_450_324 total_blocked:1_997
 
-![79-byte-stats](images/79-byte-stats.png)
-
-- All the byte stats are very consistent (the lower values at the start and end are just because the number of steps in between is lower, which I didn't correct for)
-- The number of pulled bytes is consistently at slightly above 70% of the total bytes
-- The number of blocked bytes is around 0.0025%
-- The files are actually shuffled
-- So my favorite hypothesis of something being wrong with the data is disproven; which is very good in a sense, but bad in another because now I don't know what to fix
-
 Next steps (in no particular order):
-
-- [ ] Do MoT by addition, but apply linear layer to the bytes before so that they can be mixed
-- [ ] Zero-init bytes?
-- [ ] Try it with `bpt=8, byte_dim=128` and `bpt=32, byte_dim=32`
-  - So many bytes are pulled that it might hurt
-  - On the other hand, doing it more might give more of an advantage
-- [ ] Decrease token_dim (and maybe byte_dim too?) but increase expansion factor in MLP.
-- [ ] `token_dim=512, byte_dim=32`; then only concatenate, no sum or FC layer
-  - This should lead to a very clean gradient to both the token- and byte-embeddings

@@ -1,3 +1,6 @@
+
+from typing import Literal
+
 import matplotlib.pyplot as plt
 import math
 import numpy as np
@@ -7,14 +10,22 @@ def next_multiple_of_n(v: float | int, *, n: int):
     return next(x for x in range(n, int(v) + 1 + n, n) if x >= v)
 
 
-def get_window_size_blocks(step: int, *, max_window_size: int = 3456, step_size: int = 128):
+def get_window_size_blocks(
+        step: int, *,
+        max_window_size: int = 3456,
+        step_size: int = 128,
+        schedule: Literal["cubic", "sqrt"] = "cubic",
+):
     x = step / 5960 # progress in training
     assert 0 <= x <= 1
     # Linearly increase the block-wise sliding window size over training 128 -> 1792
     # increase by @fernbear.bsky.social; block-wise by @YouJiacheng
-    factor = 4 * x ** 3 - 6 * x ** 2 + 3 * x # cubic schedule by @jadenj3o
-    # factor = 5 * x ** 3 - 6 * x ** 2 + 3 * x # cubic schedule by @jadenj3o
-    # factor = math.sqrt(x * (2 - x))
+    if schedule == "cubic":
+        factor = 4 * x ** 3 - 6 * x ** 2 + 3 * x # cubic schedule by @jadenj3o
+    elif schedule == "sqrt":
+        factor = math.sqrt(x * (2 - x))
+    else:
+        raise ValueError(f"Unknown schedule: {schedule}")
     return next_multiple_of_n(max_window_size * factor, n=step_size)
 
 
@@ -26,13 +37,20 @@ def get_lr(step: int, *, num_iterations: int = 5960, cooldown_frac: float = 0.7)
     else:
         return (1 - x) / cooldown_frac
 
-def plot_hparams():
+def plot_hparams(
+        schedule: Literal["cubic", "sqrt"] | list[Literal["cubic", "sqrt"]] = "cubic",
+        plot_lr: bool = True
+):
     x = list(range(5960))
     max_window_size: int = 3456
-    ws = [get_window_size_blocks(i) / max_window_size for i in x]
-    plt.plot(x, ws, label="train seq len")
-    lr = [get_lr(i) for i in x]
-    plt.plot(x, lr, label="learning rate")
+    schedule = [schedule] if isinstance(schedule, str) else schedule
+    for s in schedule:
+        assert s in ["cubic", "sqrt"]
+        ws = [get_window_size_blocks(i, schedule=s) / max_window_size for i in x]
+        plt.plot(x, ws, label=f"train seq len with {s} schedule")
+    if plot_lr:
+        lr = [get_lr(i) for i in x]
+        plt.plot(x, lr, label="learning rate")
     plt.xlabel("step")
     plt.ylabel(r"% of maximum")
     plt.legend()
@@ -109,20 +127,25 @@ def plot_byte_stats(header_numbers: list[int | str], filename: str, x_axis: str 
 
 
 if __name__ == "__main__":
-    # plot_hparams()
+    # plot_hparams(schedule=["cubic", "sqrt"], plot_lr=False)
     plot_results(
         {
+            # 0: "Baseline",
             1: "Baseline",
             # 7: "MoT",
-            71: "MoT-sum",
+            # 71: "MoT-sum",
             # 72: "MoT, hparams",
             # 73: "MoT-sum, norm-then-sum",
             # 74: "MoT-sum, norm-then-sum with lambdas",
             75: "MoT, hparams, token_dim=896",
+            # "01": "Baseline, lr-schedule",
+            # 76: "MoT, hparams, token_dim=896, lr-schedule",
+            # "02": "Baseline, shuffled data",
+            # 77: "MoT, hparams, token_dim=896, shuffled data",
             # "03": "Baseline, seq-len schedule",
-            # 78: "MoT, hparams, token_dim=896, seq-len schedule",
+            78: "MoT, hparams, token_dim=896, seq-len schedule",
         },
         filename="results.md",
-        x_axis="time",
+        x_axis="step",
     )
     # plot_byte_stats([79], "results.md", x_axis="step")

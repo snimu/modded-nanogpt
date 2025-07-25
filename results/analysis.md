@@ -71,7 +71,7 @@ This doesn't immediately look like the cause of the step change:
 - The learning rate starts decaying before step 2000
 - The sequence length is constant for a long time before the step change happens, and only starts increasing after (at maybe step 3900)
 
-So it might be some sort of threshold being reached for the learning rate, but it's still strange, especially because the final loss is very close (baseline: 2.919627, MoT: 2.920585 &rarr; Mot is 1.00032812 larger, or ~0.033%).
+So it might be some sort of threshold being reached for the learning rate, but it's still strange, especially because the final loss is very close (baseline: 2.919627, MoT: 2.920585 &rarr; the MoT loss is 1.00032812 times larger than the baseline loss, or ~0.033%).
 
 ## 71_mot-in_toks-valemb
 
@@ -187,3 +187,190 @@ Now the comparison to 71, the original MoT-sum:
 ![1, 71, 75: time, 1000-1500](images/1_71_75_time_1000-1500.png)
 
 Both are equally fast, but MoT-sum is slightly better. However, the difference is tiny and it might be more promising to stick with the normal MoT, for two reasons: 1) I can undo the hyperparameter-tuning that made it worse, and 2) I can further reduce the `token_dim` for the MoT while it's fixed for MoT-sum. The previously proposed MoT-sum variant where I apply a linear layer to the bytes before summing might be worth a try though.
+
+Looking back again, I was thinking about the strange hump in the loss curve of all MoT-variants again, and making this plan:
+
+- Next steps:
+  - [ ] Increase Batch size (I saved a little bit of memory)
+  - [ ] Tune hparams, especially for the byte_mixin (Prio 4)
+  - [x] Experiment with increasing the un-masked attention window for both the base & the MoT (Prio 3)
+  - [x] Change lr schedule (Prio 2)
+    - warmup_frac = 1 - cooldown_frac
+    - Do WD instead of SD as it is now (and not WSD, this ain't production material)
+  - [x] Shuffle the data; maybe there's a problem where there are a bunch of tokens that suck for the MoT and that's why the curve bends so strangely? Actually that should be theory number 1, because neither the (Prio 1)
+
+## 01_train_gpt_medium
+
+Changed from 0_train_gpt_medium:
+
+- Changed from SD schedule to WD schedule
+- Increased cooldown_frac from 0.7 to 0.95
+- warmup_frac = 1 - cooldown_frac
+
+Expectations:
+
+- I'm really 50/50 if it will work better or worse than the original
+  - On the one hand, I read that WD is strictly better than SD
+  - On the other hand, modded-nanogpt is pretty well tuned already, so who knows?
+  - Also, I don't know if the WD results hold for Muon at all
+- It might work better for the MoT, if the learning rate is the cause of the strange break in the loss curve of the MoT variants
+
+(The above are my original notes, below are the ones from after 79)
+
+I was a bit dumb doing this comparison starting from 0_train_gpt_medium instead of 1_toks-in_toks-valemb, but since the experiments were a failure anyway it's fine
+
+![0, 01: step](images/0_01_step_full.png)
+
+The adjusted learning rate schedule makes the run worse; but it's especially interesting *how* it does it. First, 01 is a lot worse than 0, then it's slightly better, and then noticably worse again. That's like a slightly different version of the MoT-loss-curves! That's a big sign that the issue with the MoT is learning-rate related.
+
+I won't make the comparison over time because the difference is tiny.
+
+## 76_mot-in_toks-valemb
+
+Changed from 75_mot-in_toks-valemb:
+
+- Same learning rate schedule as [01_train_gpt_medium](#01_train_gpt_medium)
+
+![75, 76: time](images/75_76_time_full.png)
+
+Clearly, this learning rate schedule makes things worse for the MoT, too.
+
+## 02_train_gpt_medium
+
+What I originally wrote:
+
+Changed from 0_train_gpt_medium:
+
+- Randomly shuffled files (with fixed seed)
+
+Expectations:
+
+- I think that this likely won't change much
+
+My thought process was that the strange hump might be caused by some kind of data issue; the dataloader in modded-nanogpt loads one file after the other, so the thought was that it would load a file with data that worked well, then one with data that has some issue, and then another good one (the data order is fixed). To find out, I shuffled the training data. The actual target is the MoT (which will come below), this run was just for comparison (in case the data-shuffling caused some sort of change in both runs). Here you can see the results over time:
+
+![0, 02: time](images/0_02_time_full.png)
+
+Barely a difference is visible.
+
+![0, 02: time, 1200-1500](images/0_02_time_1200-1500.png)
+
+Zoomed in, we can see that the shuffled data actually underperforms the original data order (I assume that that's just random chance; after all, the model initialization is also changed).
+
+## 77_mot-in_toks-valemb
+
+What I origianlly wrote:
+
+Changed from 75_mot-in_toks-valemb:
+
+- Randomly shuffled files (with fixed seed)
+
+Expectations:
+
+- I'm at ~80% that this will significantly change the shape of the loss curve
+- That's because my leading theory for why the plot curve looks like shit is some data problem (that I should look into later)
+
+And here are the results:
+
+![0, 75, 77: time, 1100-1500](images/0_75_77_time_1100-1500.png)
+
+Shuffling changes absolutely nothing for the MoT except for random noise.
+
+After this surprising (to me) result, I decided to do two things:
+
+1. Test if the issue is related to the sequence length
+    - I had previously trained a MoT on ~50B tokens
+    - It had significantly lower training and validation loss than the token-only baseline
+    - It was modified from an older version of modded-nanogpt (medium)
+    - Specifically, the sliding window mask was removed
+    - So I thought that that might be the issue
+    - And I wanted to test increasing the sequence length earlier just to see what the effect would be (not the most rigorous test, but easy to do and a decent proxy for whether or not this idea was promising)
+2. Check a few other statistics
+    - First off, making sure that the files were actually shuffled
+    - Secondly, checking the number of total bytes since the last validation step, as well as the number of bytes that were pulled and the number of bytes that were used to block context from another document in the same sequence. This was to check out a potential data-statistic that is unique to the MoT and might differ over the course of training
+
+## 03_mot-in_toks-valemb
+
+First off, changing the sequence-length (I changed the schedule; looking back, I don't know why I didn't just choose the maximum sequence length the entire time instead of a weird schedule, but whatever, this is still valuable data). Here's what I wrote:
+
+Changed from 00:
+
+- Changed seq-len schedule to `math.sqrt(x * (2 - x))`
+
+Expectations:
+
+- Lower val-loss than 00 (slightly)
+- Slower than 00 (significantly)
+
+Here is the plot of the updated sequence-length schedule, compared to the default (cubic) schedule:
+
+![learning rate schedule: cubic vs. square root](images/lr_schedule_cubic_and_sqrt.png)
+
+The new sequence length is always higher than the default one except in the very beginning and end. So what are the results?
+
+![0, 03: step, 100-6000](images/0_03_step_100-6000.png)
+
+Above is almost the entire plot (only the first few step are cut off). It shows that the new schedule learns more over almost the entire run (per step, not per time-step; I'll come to that). However, that breaks down in the very end. Let's look more closely at that:
+
+![0, 03: step, 5000-6000](images/0_03_step_5000-6000.png)
+
+The run with a higher sequence length throughout training does worse than the original one. Huh? I guess this is mostly a question of hyperparameter tuning (but also, I should try a modded-nanogpt run going in the other direction; maybe a constant low sequence length followed by the original cubic schedule but in shorter time?).
+
+Just as a sanity check, let's look at the time, too:
+
+![0, 03: time, 1000-1500](images/0_03_time_1000-1500.png)
+
+Yeah, the faster sequence length growth makes the run way slower (as expected) and worse. Now, most likely the MoT will also be worsened by this new sequence length schedule. But will it remove the loss hump?
+
+## 78_mot-in_toks-valemb
+
+What I wrote:
+
+Changed from 75:
+
+- Changed seq-len schedule to `math.sqrt(x * (2 - x))`
+
+Expectations:
+
+- Lower val-loss than 75
+- Slower than 75
+- Interesting is comparison to normal modded-nanogpt but with the new schedule
+
+![1, 75, 78: step, 1500-6000](images/1_75_78_step_1500-6000.png)
+
+The new sequence length schedule changes nothing about the loss hump, but it does reduce final performance of the model. This is unlikely to be the reason for the strange loss hump.
+
+So the last thing I did was capture a few statistics.
+
+## 79_mot-in_toks_valemb
+
+Changed from 77:
+
+- Log current file (from dataloader), total_bytes, pulled_bytes, blocked_bytes
+
+![79-byte-stats](images/79-byte-stats.png)
+
+- All the byte stats are very consistent (the lower values at the start and end are just because the number of steps in between is lower, which I didn't correct for)
+- The number of pulled bytes is consistently at slightly above 70% of the total bytes
+- The number of blocked bytes is around 0.0025%
+- The files are actually shuffled
+- So my favorite hypothesis of something being wrong with the data is disproven; which is very good in a sense, but bad in another because now I don't know what to fix
+
+## NEXT STEPS (2025-07-25)
+
+Here is the experiments I had planned before creating this document:
+
+- [ ] Do MoT by addition, but apply linear layer to the bytes before so that they can be mixed
+- [ ] Zero-init bytes?
+- [ ] Try it with `bpt=8, byte_dim=128` and `bpt=32, byte_dim=32`
+  - So many bytes are pulled that it might hurt
+  - On the other hand, doing it more might give more of an advantage
+- [ ] Decrease token_dim (and maybe byte_dim too?) but increase expansion factor in MLP.
+- [ ] `token_dim=512, byte_dim=32`; then only concatenate, no sum or FC layer
+  - This should lead to a very clean gradient to both the token- and byte-embeddings
+  - In a sense, it lets the actual transformer backend handle the byte mixin.
+
+Now, I would add the following:
+
+- [ ] Independently test norm changes and hyperparameter changes
+- [ ] This isn't really a specific TODO, but I should note that the normal MoT with reduced `token_dim`, worked really well so far
