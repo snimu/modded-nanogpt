@@ -271,10 +271,6 @@ peak memory allocated: 50690 MiB reserved: 55746 MiB
 
 ## 73_mot-in_toks-valemb
 
-Changed from 71: instead of `norm(byte_embs + token_embs)`, I'm going `norm(byte_embs) + norm(token_embs)`
-
-- Prediction: will be worse because model cannot itself determine the relative weight of token_embs and byte_embs
-
 step:0/5960 val_loss:10.825837 train_time:0ms step_avg:0.43ms
 step:125/5960 val_loss:4.367988 train_time:30225ms step_avg:241.80ms
 step:250/5960 val_loss:3.896824 train_time:59231ms step_avg:236.93ms
@@ -326,15 +322,7 @@ step:5875/5960 val_loss:2.924831 train_time:1498180ms step_avg:255.01ms
 step:5960/5960 val_loss:2.922675 train_time:1521212ms step_avg:255.24ms
 peak memory allocated: 50656 MiB reserved: 55744 MiB
 
-- Is worse
-
 ## 74_mot-in_toks-valemb
-
-Changed from 73: `norm(byte_embs) * scalars[-1] + norm(token_embs) * scalars[-2]`
-
-- Prediction: will be as good as 72 or better.
-  - Issue of relative weight of token_embs and byte_embs is solved
-  - But the token_embs and byte_embs themselves still get normed (which seems to have helped with tokens-only)
 
 step:0/5960 val_loss:10.825837 train_time:0ms step_avg:0.24ms
 step:125/5960 val_loss:4.335542 train_time:30196ms step_avg:241.57ms
@@ -388,11 +376,6 @@ step:5960/5960 val_loss:2.921563 train_time:1525537ms step_avg:255.96ms
 peak memory allocated: 50655 MiB reserved: 55744 MiB
 
 ## 75_mot-in_toks-valemb
-
-Changed from 72: Reduced token_dim to 896
-
-- Precictions:
-  - Faster but worse
 
 step:0/5960 val_loss:10.825837 train_time:1ms step_avg:0.88ms
 step:125/5960 val_loss:4.342659 train_time:30004ms step_avg:240.03ms

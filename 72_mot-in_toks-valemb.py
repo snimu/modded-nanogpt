@@ -5,7 +5,6 @@ Changes:
 
 - Removed the individual embedding norms (leaving only the norm in mixin_bytes)
 - Lowered the learning rate of the byte embeddings
-- Mixin bytes not via concatenation of tokens and bytes followed by an FC layer, but by summing the two
 
 I'm keeping 7_mot-in_toks-valemb.py for reproducibility.
 """

@@ -111,18 +111,17 @@ def plot_byte_stats(header_numbers: list[int | str], filename: str, x_axis: str 
 if __name__ == "__main__":
     # plot_hparams()
     plot_results(
-        [1, 7, 71],
-        # {
-        #     1: "baseline",
-        #     # 7: "MoT",
-        #     # 71: "MoT-sum",
-        #     # 72: "MoT, hparams",
-        #     # 73: "MoT-sum, norm-then-sum",
-        #     # 74: "MoT-sum, norm-then-sum with lambdas",
-        #     # 75: "MoT, hparams, token_dim=896",
-        #     # "03": "baseline, seq-len schedule",
-        #     # 78: "MoT, hparams, token_dim=896, seq-len schedule",
-        # },
+        {
+            1: "Baseline",
+            # 7: "MoT",
+            71: "MoT-sum",
+            # 72: "MoT, hparams",
+            # 73: "MoT-sum, norm-then-sum",
+            # 74: "MoT-sum, norm-then-sum with lambdas",
+            75: "MoT, hparams, token_dim=896",
+            # "03": "Baseline, seq-len schedule",
+            # 78: "MoT, hparams, token_dim=896, seq-len schedule",
+        },
         filename="results.md",
         x_axis="time",
     )

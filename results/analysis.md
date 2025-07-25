@@ -103,3 +103,87 @@ Let's zoom in a bit:
 
 - MoT-sum is worse than the baseline the entire time
 - But the real issue is again that weird camel bump
+
+## 72_mot-in_toks-valemb
+
+This is changed from 7:
+
+- Removed the individual norms from the token- and byte-embeddings, and only normed after the FC layer that mixes in the bytes
+- Lowered the learning rate of the byte_embeddings from 0.3 to 0.1
+
+Looking back (from after experiment 79 which I will get to), I should have disentangled those changes; I might need to look at them at some later point.
+
+Just looking at the time, 72 has a per-step time of 256.28ms; MoT-sum has 255.56ms, MoT 260.98ms. That's confusing; why should anything change vs. MoT? I might have made a mistake and will have to try the two changes individually later.
+
+![1, 7, 72: step, 1500-6000](images/1_7_72_step_1500-6000.png)
+
+- The regular MoT is very slightly better
+- But the difference is negliable, so I'll have to repeat the changes separately and properly
+
+## 73_mot-in_toks-valemb
+
+Changed from 71: instead of `norm(byte_embs + token_embs)`, I'm going `norm(byte_embs) + norm(token_embs)`
+
+> Again, I'm writing this down after having done experiment 79, but at this point, I started registering my predictions
+
+- Prediction: will be worse because model cannot itself determine the relative weight of token_embs and byte_embs
+
+![1, 71, 73: step, 1500-6000](images/1_71_73_step_1500-6000.png)
+
+This modification makes performance worse than the original MoT-sum.
+
+## 74_mot-in_toks-valemb
+
+Changed from 73: `norm(byte_embs) * scalars[-1] + norm(token_embs) * scalars[-2]`
+
+- Prediction: will be as good as 71 or better.
+  - Issue of relative weight of token_embs and byte_embs is solved
+  - But the token_embs and byte_embs themselves still get normed (which seems to have helped with tokens-only)
+
+![1, 71, 74: step, 4500-6000](images/1_71_74_step_4500-6000.png)
+
+My prediction was wrong: this version of MoT-sum is actually worse than 71.
+
+What I haven't tried is `norm( norm(byte_embs) * scalars[-1] + norm(token_embs) * scalars[-2] )`.
+
+## 75_mot-in_toks-valemb
+
+Changed from 72: Reduced token_dim to 896
+
+- Precictions:
+  - Faster but worse
+
+Results (since the shape of the plots of 72 and 75 are basically identical and they're very close, I'll just show a zoomed in version), starting with per-step:
+
+![1, 72, 75: step, 5000-6000](images/1_72_75_step_5000-6000.png)
+
+Surprisingly, this is actually better! To me, that points to the Fully Connected layer that projects from the concatenated tokens and bytes into the model dimension being under-tuned. Which makes sense because if `bytes_per_token=16, byte_dim=64, token_dim=1024`, the weight will have shape `1024 x 2048`. That's pretty large (though the expansion factor in the MLPs is also large, so I'm not entirely sure that this makes sense).
+
+That gives me a hint for two next things that I could do:
+
+1. Reduce the dimensions so that the byte-mixin weight has shape `1024 x 1024`; so `byte_dim=32, token_dim=512`
+2. Tune the learning rate
+
+Let's look at the time, too:
+
+![1, 72, 75: time, 1250-1500](images/1_72_75_time_1250-1500.png)
+
+The reduced `token_dim` speeds up the training a little bit, which is nice.
+
+These results make me curious about two further comparisons: 1) comparison to 7 (the original MoT), because it's better than 72 and thus a better baseline, and 2) comparison to 71 (the best MoT-sum), because that's also pretty good and very fast (for a MoT).
+
+First off, the comparison to the original MoT:
+
+![1, 7, 75: step, 5000-6000](images/1_7_75_step_5000-6000.png)
+
+The original MoT is slightly better than this one, but I also screwed up and did the hyperparameter tuning at the same time. I'd like to see a comparison between the MoT with reduced `token_dim` but no tuned hyperparameters and the original MoT. Especially because per-time, the comparison looks very different:
+
+![1, 7, 75: time, 1000-1500](images/1_7_75_time_1000-1500.png)
+
+75 is clearly much faster than 7.
+
+Now the comparison to 71, the original MoT-sum:
+
+![1, 71, 75: time, 1000-1500](images/1_71_75_time_1000-1500.png)
+
+Both are equally fast, but MoT-sum is slightly better. However, the difference is tiny and it might be more promising to stick with the normal MoT, for two reasons: 1) I can undo the hyperparameter-tuning that made it worse, and 2) I can further reduce the `token_dim` for the MoT while it's fixed for MoT-sum. The previously proposed MoT-sum variant where I apply a linear layer to the bytes before summing might be worth a try though.
