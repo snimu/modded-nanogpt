@@ -4,8 +4,6 @@ Variation of 71_mot-in_toks-valemb.py
 Changes:
 
 - MoT via pure concatenation; token_dim=512, byte_dim=32
-
-I'm keeping 7_mot-in_toks-valemb.py for reproducibility.
 """
 
 import os
@@ -314,7 +312,7 @@ class GPT(nn.Module):
         assert len(block_masks) == len(self.blocks)
 
         x_toks = self.embed_tokens(token_inputs)[None]
-        x_bytes = self.embed_bytes(byte_inputs).squeeze()
+        x_bytes = self.embed_bytes(byte_inputs).squeeze()[None]
         x = x0 = mixin_bytes(x_toks, x_bytes)
 
         skip_connections = []
