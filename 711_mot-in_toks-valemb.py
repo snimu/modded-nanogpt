@@ -312,7 +312,7 @@ class GPT(nn.Module):
         assert len(block_masks) == len(self.blocks)
 
         x_toks = self.embed_tokens(token_inputs)[None]
-        x_bytes = self.embed_bytes(byte_inputs).squeeze()[None]
+        x_bytes = self.embed_bytes(byte_inputs).squeeze()
         x = x0 = mixin_bytes(x_toks, x_bytes)
 
         skip_connections = []
