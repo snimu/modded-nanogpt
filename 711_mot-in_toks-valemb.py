@@ -312,7 +312,7 @@ class GPT(nn.Module):
         assert len(block_masks) == len(self.blocks)
 
         x_toks = self.embed_tokens(token_inputs)[None]
-        x_bytes = self.embed_bytes(byte_inputs).squeeze()
+        x_bytes = self.embed_bytes(byte_inputs).squeeze()[None]
         x = x0 = mixin_bytes(x_toks, x_bytes)
 
         skip_connections = []
@@ -478,7 +478,7 @@ def distributed_data_generator(filename_pattern: str, batch_size: int, rank : in
                 bytes_per_token=16,
                 pad_byte=456,
                 eot_byte=457,
-            ).view(16, -1).contiguous()
+            ).contiguous()
         yield token_inputs, byte_inputs.to(dtype=token_inputs.dtype), token_targets
 
 # -----------------------------------------------------------------------------
@@ -636,7 +636,7 @@ initial_state = copy.deepcopy(dict(model=model.state_dict(), optimizers=[opt.sta
 for step in range(warmup_steps):
     print0(f"warmup step: {step+1}/{warmup_steps}", console=True)
     token_inputs = targets = torch.randint(0, args.token_vocab_size, size=(args.train_seq_len,), device="cuda")
-    byte_inputs = torch.randint(0, args.byte_vocab_size, size=(args.train_seq_len * 16,), device="cuda").view(16, -1).contiguous()
+    byte_inputs = torch.randint(0, args.byte_vocab_size, size=(args.train_seq_len * 16,), device="cuda")
     model(token_inputs.to(torch.int32), byte_inputs.to(torch.int32), targets, get_window_size_blocks(0)).backward()
     for param in model.parameters():
         dist.all_reduce(param.grad, op=dist.ReduceOp.AVG)
