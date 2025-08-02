@@ -565,9 +565,6 @@ model: nn.Module = GPT(
 for m in model.modules():
     if isinstance(m, nn.Embedding):
         m.bfloat16()
-if master_process:
-    num_params = sum(p.numel() for p in model.parameters())
-    print0(f"\n{num_params=:_}\n", console=True)
 for param in model.parameters():
     dist.broadcast(param.detach(), 0)
 
@@ -719,6 +716,7 @@ for step in range(train_steps + 1):
     approx_training_time_ms = training_time_ms + 1000 * (time.perf_counter() - t0)
     print0(f"step:{step+1}/{train_steps} train_time:{approx_training_time_ms:.0f}ms step_avg:{approx_training_time_ms/(step + 1):.2f}ms", console=True)
 
+print0(f"\nnum_params={sum(p.numel() for p in model.parameters()):_}\n", console=True)
 print0(f"peak memory allocated: {torch.cuda.max_memory_allocated() // 1024 // 1024} MiB "
     f"reserved: {torch.cuda.max_memory_reserved() // 1024 // 1024} MiB", console=True)
 dist.destroy_process_group()
