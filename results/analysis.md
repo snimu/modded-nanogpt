@@ -2,11 +2,11 @@
 
 Analyzing the results as they come in
 
-## 0_train_gpt_medium
+## 0
 
 The original script.
 
-## 1_toks-in_toks-valemb
+## 1
 
 The original script but with my dataloader, to see the performance difference it makes.
 
@@ -24,7 +24,7 @@ Performance per step:
   - The dataloader isn't as slow as expected
   - But as expected, it does make a bit of a difference
 
-## 7_mot-in_toks-valemb
+## 7
 
 I'll compare it to 1 as the baseline, so that the dataloader isn't a factor. Let's first look at the per-step and per-time performance of both over the full run.
 
@@ -73,7 +73,7 @@ This doesn't immediately look like the cause of the step change:
 
 So it might be some sort of threshold being reached for the learning rate, but it's still strange, especially because the final loss is very close (baseline: 2.919627, MoT: 2.920585 &rarr; the MoT loss is 1.00032812 times larger than the baseline loss, or ~0.033%).
 
-## 71_mot-in_toks-valemb
+## 71
 
 I first want to try a modification of the MoT: instead of concatenating the tokens and bytes and applying a linear layer, I make sure that `byte_dim * bytes_per_token = token_dim = model_dim = 1024` and then sum the tokens and the concatenated bytes of each token. I'll call it MoT-sum. Let's compare this to both 1 and 7. And since I can immediately see that the curves for 7 and 71 are almost exactly the same, I'll just start with the zoomed in version of the late steps:
 
@@ -104,7 +104,7 @@ Let's zoom in a bit:
 - MoT-sum is worse than the baseline the entire time
 - But the real issue is again that weird camel bump
 
-## 72_mot-in_toks-valemb
+## 72
 
 This is changed from 7:
 
@@ -120,7 +120,7 @@ Just looking at the time, 72 has a per-step time of 256.28ms; MoT-sum has 255.56
 - The regular MoT is very slightly better
 - But the difference is negliable, so I'll have to repeat the changes separately and properly
 
-## 73_mot-in_toks-valemb
+## 73
 
 Changed from 71: instead of `norm(byte_embs + token_embs)`, I'm going `norm(byte_embs) + norm(token_embs)`
 
@@ -132,7 +132,7 @@ Changed from 71: instead of `norm(byte_embs + token_embs)`, I'm going `norm(byte
 
 This modification makes performance worse than the original MoT-sum.
 
-## 74_mot-in_toks-valemb
+## 74
 
 Changed from 73: `norm(byte_embs) * scalars[-1] + norm(token_embs) * scalars[-2]`
 
@@ -146,7 +146,7 @@ My prediction was wrong: this version of MoT-sum is actually worse than 71.
 
 What I haven't tried is `norm( norm(byte_embs) * scalars[-1] + norm(token_embs) * scalars[-2] )`.
 
-## 75_mot-in_toks-valemb
+## 75
 
 Changed from 72: Reduced token_dim to 896
 
@@ -199,9 +199,9 @@ Looking back again, I was thinking about the strange hump in the loss curve of a
     - Do WD instead of SD as it is now (and not WSD, this ain't production material)
   - [x] Shuffle the data; maybe there's a problem where there are a bunch of tokens that suck for the MoT and that's why the curve bends so strangely? Actually that should be theory number 1, because neither the (Prio 1)
 
-## 01_train_gpt_medium
+## 01
 
-Changed from 0_train_gpt_medium:
+Changed from 0:
 
 - Changed from SD schedule to WD schedule
 - Increased cooldown_frac from 0.7 to 0.95
@@ -217,7 +217,7 @@ Expectations:
 
 (The above are my original notes, below are the ones from after 79)
 
-I was a bit dumb doing this comparison starting from 0_train_gpt_medium instead of 1_toks-in_toks-valemb, but since the experiments were a failure anyway it's fine
+I was a bit dumb doing this comparison starting from 0 instead of 1, but since the experiments were a failure anyway it's fine
 
 ![0, 01: step](images/0_01_step_full.png)
 
@@ -225,21 +225,21 @@ The adjusted learning rate schedule makes the run worse; but it's especially int
 
 I won't make the comparison over time because the difference is tiny.
 
-## 76_mot-in_toks-valemb
+## 76
 
-Changed from 75_mot-in_toks-valemb:
+Changed from 75:
 
-- Same learning rate schedule as [01_train_gpt_medium](#01_train_gpt_medium)
+- Same learning rate schedule as [01](#01)
 
 ![75, 76: time](images/75_76_time_full.png)
 
 Clearly, this learning rate schedule makes things worse for the MoT, too.
 
-## 02_train_gpt_medium
+## 02
 
 What I originally wrote:
 
-Changed from 0_train_gpt_medium:
+Changed from 0:
 
 - Randomly shuffled files (with fixed seed)
 
@@ -257,11 +257,11 @@ Barely a difference is visible.
 
 Zoomed in, we can see that the shuffled data actually underperforms the original data order (I assume that that's just random chance; after all, the model initialization is also changed).
 
-## 77_mot-in_toks-valemb
+## 77
 
 What I origianlly wrote:
 
-Changed from 75_mot-in_toks-valemb:
+Changed from 75:
 
 - Randomly shuffled files (with fixed seed)
 
@@ -289,7 +289,7 @@ After this surprising (to me) result, I decided to do two things:
     - First off, making sure that the files were actually shuffled
     - Secondly, checking the number of total bytes since the last validation step, as well as the number of bytes that were pulled and the number of bytes that were used to block context from another document in the same sequence. This was to check out a potential data-statistic that is unique to the MoT and might differ over the course of training
 
-## 03_mot-in_toks-valemb
+## 03
 
 First off, changing the sequence-length (I changed the schedule; looking back, I don't know why I didn't just choose the maximum sequence length the entire time instead of a weird schedule, but whatever, this is still valuable data). Here's what I wrote:
 
@@ -322,7 +322,7 @@ Just as a sanity check, let's look at the time, too:
 
 Yeah, the faster sequence length growth makes the run way slower (as expected) and worse. Now, most likely the MoT will also be worsened by this new sequence length schedule. But will it remove the loss hump?
 
-## 78_mot-in_toks-valemb
+## 78
 
 What I wrote:
 
@@ -381,7 +381,7 @@ The plan:
   - 711: MoT by concatenation (`token_dim=512, byte_dim=32`)
   - 712: If 711 works well, increase the expansion factor of the MLP until the number of parameters is similar to the baseline again
 
-## 711_mot-in_toks-valemb
+## 711
 
 MoT by concatenation (`token_dim=512, byte_dim=32`); Hyperparameters: (`lr_tok=0.3, lr_byte=0.1`) -> still likely suboptimal (at least for the default MoT 7, it worsened performance).
 
@@ -401,21 +401,21 @@ Here is the validation loss over the steps, compared to the original MoT (7), th
 
 711 is actually sufficiently much faster than 7 (MoT) that it would be a good, cheaper alternative. But 71 (MoT-sum) crushes it; it's not only better per step, but also faster. Of course, the baseline is still better in every way.
 
-Alright, so I should dismiss this idea. However, I had run another experiment in parallel: [712](#712_mot-in_toks-valemb).
+Alright, so I should dismiss this idea. However, I had run another experiment in parallel: [712](#712).
 
-## 712_mot-in_toks-valemb
+## 712
 
-This is like [711](#711_mot-in_toks-valemb) but the MLP hidden dimension has been increased by 768. This is motivated by the fact that reducing the `token_dim` reduces the total number of parameters quite significantly. I wanted to make up for that by increasing the MLP hidden dimension and see how it goes.
+This is like [711](#711) but the MLP hidden dimension has been increased by 768. This is motivated by the fact that reducing the `token_dim` reduces the total number of parameters quite significantly. I wanted to make up for that by increasing the MLP hidden dimension and see how it goes.
 
 Number of parameters:
 
-- [Baseline (0)](#0_train_gpt_medium): 454_496_336
-- [MoT-concat (711)](#711_mot-in_toks-valemb): 428_779_408
-- [MoT-concat with increased hidden dim (712)](#712_mot-in_toks-valemb): 453_945_232
+- [Baseline (0)](#0): 454_496_336
+- [MoT-concat (711)](#711): 428_779_408
+- [MoT-concat with increased hidden dim (712)](#712): 453_945_232
 
 So the total number of parameters still doesn't quite match the baseline. Of course, embedding parameters and MLP parameters aren't perfectly comparable: embeddings are sparsely activated while the MLP works on every token in every batch. A fairer comparison would probably be to increase the number of experts in an MoE while keeping the number of active parameters constant, but I'm not about to implement that (not to mention that it would be a radical architecture change that would make the comparison worse). In fact, even then, the MoE has to be held in GPU memory, while the embeddings can be offloaded to another device, because their inputs are one-hot they can thus be fetched via a simple table lookup instead of
 
-So here is the comparison to the [Baseline](#1_toks-in_toks-valemb) and [MoT-concat](#711_mot-in_toks-valemb) per step:
+So here is the comparison to the [Baseline](#1) and [MoT-concat](#711) per step:
 
 ![1, 711, 712: step, 2500-6000](images/1_711_712_step_2500-6000.png)
 
@@ -425,9 +425,9 @@ And damn! This crushes. However, it still has the strange loss hump, and again: 
 
 It's ridiculously much slower. This is clearly not the way to go.
 
-## 713_mot-in_toks-valemb
+## 713
 
-Variation of [#711](#711_mot-in_toks-valemb) where I switched the order of MLP and Attention.
+Variation of [#711](#711) where I switched the order of MLP and Attention.
 
 That might sound crazy, but hear me out: normally, Attention comes before the MLP because embeddings only depend on a single token, so if we applied the first MLP to them it would just be an extension of the embedding layer. This means that the number of different inputs that the MLP can possibly see is limited by the vocabulary size, which in turn limits the MLP's contribution to generalization to different sequences. But if we put Attention first, it will mix the tokens in a sequence and allow the subsequent MLP to perform its calculation based on the entire sequence of tokens, allowing it to contribute to understanding previously unseen sequences.
 
@@ -437,66 +437,54 @@ This mixing might actually be especially relevant for MoT-concat (and maybe MoT-
 
 Predictions:
 
-- It's likely slightly worse than [#711](#711_mot-in_toks-valemb); and if it's better, only slightly so
+- It's likely slightly worse than [#711](#711); and if it's better, only slightly so
 - The speed will hopefully be unchanged
 
 ...
 
-## 71011_mot-in_toks-valemb
+## 71011, 71012, 71013, 71021, 71022
 
-Variation of [#71 (MoT-sum)](#71_mot-in_toks-valemb).
+Variations of [#71 (MoT-sum)](#71).
 
-In 71, `lr_tok=0.3, lr_byte=0.1`; in [#7 (MoT)](#7_mot-in_toks-valemb) vs. [#72 (MoT with `lr_byte=0.1`)](#72_mot-in_toks-valemb), this made things worse. So I'll tune the learning rates a bit for now.
+In 71, `lr_tok=0.3, lr_byte=0.1`; in [#7 (MoT)](#7) vs. [#72 (MoT with `lr_byte=0.1`)](#72), this made things worse. So I'll tune the learning rates a bit for now.
 
-In #71011, it's:
+Here are the learning rates:
 
-- `lr_tok=0.3`
-- `lr_byte=0.3`
+| Experiment number | `lr_tok` | `lr_byte` |
+| --- | --- | --- |
+| 71 | 0.3 | 0.1 |
+| 71011 | 0.3 | 0.3 |
+| 71012 | 0.3 | 0.4 |
+| 71013 | 0.3 | 0.2 |
+| 71021 | 0.4 | 0.3 |
+| 71022 | 0.2 | 0.3 |
 
-So it's the actual baseline MoT-sum, which #71 isn't (yeah the numbering system is completely fucked now, it grew over time...). I have no predictions for these runs, I'll just run them and look at the results.
+So #71011 the actual baseline MoT-sum, which #71 isn't (yeah the numbering system is completely fucked now, it grew over time...). The others are just variations. I have no predictions for these runs, I'll just run them and look at the results.
 
-...
+I will only analyze them over the steps, because the learning rate should have no impact on timing, so any difference in speed is random (and yes, I realize that comparing the results of a single run also introduces a lot of randomness).
 
-## 71012_mot-in_toks-valemb
+They are all still worse than the baseline [#1](#1), so I will spare you that. Since only a very zoomed-in view shows any differences at all, here's one:
 
-Another hyperparameter-tuning variation of [#71 (MoT-sum)](#71_mot-in_toks-valemb).
+![71-71022: step, 5500-6000](images/71-71022_step_5500-6000.png)
 
-In #71012, the hyperparameters are:
+The main thing to take away from this is that decreasing `lr_token` is a bad idea. As for the other settings, let's look at them in detail:
 
-- `lr_tok=0.3`
-- `lr_byte=0.4`
+![71-71022: step, 5920-5960](images/71-71022_step_5920-5960.png)
 
-...
+Two takeaways:
 
-## 71013_mot-in_toks-valemb
+1. Very, very clearly, increasing `lr_byte` is the way to go; I should tune this more
+2. By a slight margin, #71021 beats out #71011, so `loss(lr_token=0.4) < loss(lr_token=0.3)`; but the difference is so small that I wonder if the optimal value is between these two, or if it's just random chance and doesn't matter
 
-Another hyperparameter-tuning variation of [#71 (MoT-sum)](#71_mot-in_toks-valemb).
+So my next learning-rate tuning experiments should be:
 
-In #71013, the hyperparameters are:
+- Testing norms (#7104*), especially `norm( lambda_1 * norm(tok_embs) + lambda_2 * norm(byte_embs) )`; but maybe normalize the lambdas and print them in the end to get some useful information about them; take #71011 as baseline, so that the learning-rates are like in the original modded-nanogpt
+- Testing combined `lr_tok` and `lr_byte` changes (#7103*)
+  - #71031: `lr_tok=0.4, lr_byte=0.4`
+  - #71032: `lr_tok=0.35, lr_byte=0.4`
+  - #71033: `lr_tok=0.4, lr_byte=0.45`
+  - #71034: `lr_tok=0.35, lr_byte=0.45`
+  - #71035: `lr_tok=0.4, lr_byte=0.5`
+  - #71036: `lr_tok=0.35, lr_byte=0.5`
 
-- `lr_tok=0.3`
-- `lr_byte=0.2`
-
-...
-
-## 71021_mot-in_toks-valemb
-
-Another hyperparameter-tuning variation of [#71 (MoT-sum)](#71_mot-in_toks-valemb).
-
-In #71021, the hyperparameters are:
-
-- `lr_tok=0.4`
-- `lr_byte=0.3`
-
-...
-
-## 71022_mot-in_toks-valemb
-
-Another hyperparameter-tuning variation of [#71 (MoT-sum)](#71_mot-in_toks-valemb).
-
-In #71022, the hyperparameters are:
-
-- `lr_tok=0.2`
-- `lr_byte=0.3`
-
-...
+I can then combine the best norm combination with the best learning rate combination. Afterward, I will try changing the number of bytes per token, for either more or fewer pulled bytes.
