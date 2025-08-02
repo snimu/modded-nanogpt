@@ -365,8 +365,8 @@ Here is the experiments I had planned before creating this document:
 - [ ] Try it with `bpt=8, byte_dim=128` and `bpt=32, byte_dim=32`
   - So many bytes are pulled that it might hurt
   - On the other hand, doing it more might give more of an advantage
-- [ ] Decrease token_dim (and maybe byte_dim too?) but increase expansion factor in MLP.
-- [ ] `token_dim=512, byte_dim=32`; then only concatenate, no sum or FC layer
+- [ ] Decrease `token_dim` (and maybe `byte_dim` too?) but increase expansion factor in MLP.
+- [x] `token_dim=512, byte_dim=32`; then only concatenate, no sum or FC layer
   - This should lead to a very clean gradient to both the token- and byte-embeddings
   - In a sense, it lets the actual transformer backend handle the byte mixin.
 
@@ -374,3 +374,54 @@ Now, I would add the following:
 
 - [ ] Independently test norm changes and hyperparameter changes
 - [ ] This isn't really a specific TODO, but I should note that the normal MoT with reduced `token_dim`, worked really well so far
+
+The plan:
+
+- Add `num_params` to the end-printout
+- Runs:
+  - 711: MoT by concatenation (`token_dim=512, byte_dim=32`)
+  - 712: If 711 works well, increase the expansion factor of the MLP until the number of parameters is similar to the baseline again
+
+## 711_mot-in_toks-valemb
+
+MoT by concatenation (`token_dim=512, byte_dim=32`); Hyperparameters: (`lr_tok=0.3, lr_byte=0.1`) -> still likely suboptimal (at least for the default MoT 7, it worsened performance).
+
+Predictions:
+
+- Should be pretty fast; only thing that makes it slower than 1 (baseline with my dataloader) is the concatenation ops
+- Should be pretty good; token embeddings of size 512 are not too bad, and the gradient signal isn't blocked in any way, so that alone should be okay; and the bytes should only add to that (oooooh, that would be a nice baseline: replace the bytes with a single learned vector).
+- I don't think it will remove the loss hump, simply because I'm now convinced that that's mostly due to a change in optimal hyperparameters (or the fundamental structure of mixed token- and byte-embeddings, but that seems less likely)
+
+Here is the validation loss over the steps, compared to the original MoT (7), the MoT through addition (71), and of course the baseline (1):
+
+![1, 7, 71, 711: step, 2500-6000](images/1_7_71_711_step_2500-6000.png)
+
+711 is very clearly the worst of all the baselines that matter. But maybe it's so much faster that it's still worth looking into?
+
+![1, 7, 71, 711: time, 800-1600](images/1_7_71_711_time_800-1600.png)
+
+711 is actually sufficiently much faster than 7 (MoT) that it would be a good, cheaper alternative. But 71 (MoT-sum) crushes it; it's not only better per step, but also faster. Of course, the baseline is still better in every way.
+
+Alright, so I should dismiss this idea. However, I had run another experiment in parallel: 712.
+
+## 712_mot-in_toks-valemb
+
+This is like [711](#711_mot-in_toks-valemb) but the MLP hidden dimension has been increased by 768. This is motivated by the fact that reducing the `token_dim` reduces the total number of parameters quite significantly. I wanted to make up for that by increasing the MLP hidden dimension and see how it goes.
+
+Number of parameters:
+
+- [Baseline (0)](#0_train_gpt_medium): 454_496_336
+- [MoT-concat (711)](#711_mot-in_toks-valemb): 428_779_408
+- [MoT-concat with increased hidden dim (712)](#712_mot-in_toks-valemb): 453_945_232
+
+So the total number of parameters still doesn't quite match the baseline. Of course, embedding parameters and MLP parameters aren't perfectly comparable: embeddings are sparsely activated while the MLP works on every token in every batch. A fairer comparison would probably be to increase the number of experts in an MoE while keeping the number of active parameters constant, but I'm not about to implement that (not to mention that it would be a radical architecture change that would make the comparison worse). In fact, even then, the MoE has to be held in GPU memory, while the embeddings can be offloaded to another device, because their inputs are one-hot they can thus be fetched via a simple table lookup instead of
+
+So here is the comparison to the [Baseline](#1_toks-in_toks-valemb) and [MoT-concat](#711_mot-in_toks-valemb) per step:
+
+![1, 711, 712: step, 2500-6000](images/1_711_712_step_2500-6000.png)
+
+And damn! This crushes. However, it still has the strange loss hump, and again: MLP parameters and embedding parameters aren't super comparable. That last fact is very visible when we compare performance over time:
+
+![1, 711, 712: time, 800-1700](images/1_711_712_time_800-1700.png)
+
+It's ridiculously much slower. This is clearly not the way to go.
