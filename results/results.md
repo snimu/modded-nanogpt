@@ -906,3 +906,27 @@ step:5750/5960 val_loss:2.921417 train_time:1579655ms step_avg:274.72ms
 step:5875/5960 val_loss:2.914711 train_time:1615371ms step_avg:274.96ms
 step:5960/5960 val_loss:2.912500 train_time:1639716ms step_avg:275.12ms
 peak memory allocated: 53420 MiB reserved: 58504 MiB
+
+## 713_mot-in_toks-valemb
+
+...
+
+## 71011_mot-in_toks-valemb
+
+...
+
+## 71012_mot-in_toks-valemb
+
+...
+
+## 71013_mot-in_toks-valemb
+
+...
+
+## 71021_mot-in_toks-valemb
+
+...
+
+## 71022_mot-in_toks-valemb
+
+...

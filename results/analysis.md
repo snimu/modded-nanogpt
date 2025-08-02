@@ -365,7 +365,7 @@ Here is the experiments I had planned before creating this document:
 - [ ] Try it with `bpt=8, byte_dim=128` and `bpt=32, byte_dim=32`
   - So many bytes are pulled that it might hurt
   - On the other hand, doing it more might give more of an advantage
-- [ ] Decrease `token_dim` (and maybe `byte_dim` too?) but increase expansion factor in MLP.
+- [x] Decrease `token_dim` (and maybe `byte_dim` too?) but increase expansion factor in MLP.
 - [x] `token_dim=512, byte_dim=32`; then only concatenate, no sum or FC layer
   - This should lead to a very clean gradient to both the token- and byte-embeddings
   - In a sense, it lets the actual transformer backend handle the byte mixin.
@@ -373,7 +373,6 @@ Here is the experiments I had planned before creating this document:
 Now, I would add the following:
 
 - [ ] Independently test norm changes and hyperparameter changes
-- [ ] This isn't really a specific TODO, but I should note that the normal MoT with reduced `token_dim`, worked really well so far
 
 The plan:
 
@@ -402,7 +401,7 @@ Here is the validation loss over the steps, compared to the original MoT (7), th
 
 711 is actually sufficiently much faster than 7 (MoT) that it would be a good, cheaper alternative. But 71 (MoT-sum) crushes it; it's not only better per step, but also faster. Of course, the baseline is still better in every way.
 
-Alright, so I should dismiss this idea. However, I had run another experiment in parallel: 712.
+Alright, so I should dismiss this idea. However, I had run another experiment in parallel: [712](#712_mot-in_toks-valemb).
 
 ## 712_mot-in_toks-valemb
 
@@ -425,3 +424,79 @@ And damn! This crushes. However, it still has the strange loss hump, and again: 
 ![1, 711, 712: time, 800-1700](images/1_711_712_time_800-1700.png)
 
 It's ridiculously much slower. This is clearly not the way to go.
+
+## 713_mot-in_toks-valemb
+
+Variation of [#711](#711_mot-in_toks-valemb) where I switched the order of MLP and Attention.
+
+That might sound crazy, but hear me out: normally, Attention comes before the MLP because embeddings only depend on a single token, so if we applied the first MLP to them it would just be an extension of the embedding layer. This means that the number of different inputs that the MLP can possibly see is limited by the vocabulary size, which in turn limits the MLP's contribution to generalization to different sequences. But if we put Attention first, it will mix the tokens in a sequence and allow the subsequent MLP to perform its calculation based on the entire sequence of tokens, allowing it to contribute to understanding previously unseen sequences.
+
+But I concatenate the byte-embeddings to the token-embeddings; and the byte-embeddings are pulled, meaning that on average a little more than 70% of them actually belong to previous tokens! In this way, the embeddings are already sequence-dependent, and putting the MLP first would allow it to effectively combine a (very localized) attention operation with the normal MLP job. Maybe it's worse at both than an independent Attention and MLP layer, but at least it is less likely to waste compute.
+
+This mixing might actually be especially relevant for MoT-concat (and maybe MoT-sum, too): at the input, bytes are appended along both the model-dimension and the sequence dimension; but the ordering along the model-dimension is the local ordering and along the sequence dimension the global ordering (speaking loosely). This, to me, means that mixing along the model-dimension first (via the MLP) and then along the model-dimension (via Attention) is the correct order, because mixing along the sequence-dimension first might lead to collisions between bytes that are in the position that they're in for a random reason. And yes, the FC layers in Attention can probably handle this, but it's a lot to put on them, and I'd at least like to try out the alternative.
+
+Predictions:
+
+- It's likely slightly worse than [#711](#711_mot-in_toks-valemb); and if it's better, only slightly so
+- The speed will hopefully be unchanged
+
+...
+
+## 71011_mot-in_toks-valemb
+
+Variation of [#71 (MoT-sum)](#71_mot-in_toks-valemb).
+
+In 71, `lr_tok=0.3, lr_byte=0.1`; in [#7 (MoT)](#7_mot-in_toks-valemb) vs. [#72 (MoT with `lr_byte=0.1`)](#72_mot-in_toks-valemb), this made things worse. So I'll tune the learning rates a bit for now.
+
+In #71011, it's:
+
+- `lr_tok=0.3`
+- `lr_byte=0.3`
+
+So it's the actual baseline MoT-sum, which #71 isn't (yeah the numbering system is completely fucked now, it grew over time...). I have no predictions for these runs, I'll just run them and look at the results.
+
+...
+
+## 71012_mot-in_toks-valemb
+
+Another hyperparameter-tuning variation of [#71 (MoT-sum)](#71_mot-in_toks-valemb).
+
+In #71012, the hyperparameters are:
+
+- `lr_tok=0.3`
+- `lr_byte=0.4`
+
+...
+
+## 71013_mot-in_toks-valemb
+
+Another hyperparameter-tuning variation of [#71 (MoT-sum)](#71_mot-in_toks-valemb).
+
+In #71013, the hyperparameters are:
+
+- `lr_tok=0.3`
+- `lr_byte=0.2`
+
+...
+
+## 71021_mot-in_toks-valemb
+
+Another hyperparameter-tuning variation of [#71 (MoT-sum)](#71_mot-in_toks-valemb).
+
+In #71021, the hyperparameters are:
+
+- `lr_tok=0.4`
+- `lr_byte=0.3`
+
+...
+
+## 71022_mot-in_toks-valemb
+
+Another hyperparameter-tuning variation of [#71 (MoT-sum)](#71_mot-in_toks-valemb).
+
+In #71022, the hyperparameters are:
+
+- `lr_tok=0.2`
+- `lr_byte=0.3`
+
+...
