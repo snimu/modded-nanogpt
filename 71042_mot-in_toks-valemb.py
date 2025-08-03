@@ -253,7 +253,7 @@ class GPT(nn.Module):
             torch.ones(num_layers), # skip_weights
             *[torch.tensor([1.0, 0.0]) for _ in range(num_layers)], # block lambdas
             *[torch.tensor([0.5, 0.5]) for _ in range(num_layers)], # SA lambdas
-            *torch.tensor([0.5, 0.5]), # embeddings norm lambdas
+            torch.tensor([0.5, 0.5]), # embeddings norm lambdas
         ]))
 
     def create_blockmasks(self, input_seq: Tensor, sliding_window_num_blocks: Tensor):
