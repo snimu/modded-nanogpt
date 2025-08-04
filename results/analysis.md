@@ -479,12 +479,18 @@ Two takeaways:
 So my next learning-rate tuning experiments should be:
 
 - Testing norms (#7104*), especially `norm( lambda_1 * norm(tok_embs) + lambda_2 * norm(byte_embs) )`; but maybe normalize the lambdas and print them in the end to get some useful information about them; take #71011 as baseline, so that the learning-rates are like in the original modded-nanogpt
+  - [x] #71041: `norm( lambda_1  * norm(tok_embs) + lambda_2 * norm(byte_embs) )`
+  - [x] #71042: `norm( lambda_1 * norm(tok_embs) / (lambda_1 + lambda_2) + lambda_2 * norm(byte_embs) / (lambda_1 + lambda_2) )`
+  - [x] #71043: same as 71042, but initialized to `lambda_1=0.99, lambda_2=0.01`; initialize as tokens only (without causing an issue with gradients), let the model learn the right amount of byte-mixin itself
+  - [x] #71044: same as 71042, but initialized to `lambda_1=0.6, lambda_2=0.4`, because (spoiler alert) that's what they end up at when initialized to `lambda_1=0.5, lambda_2=0.5`
 - Testing combined `lr_tok` and `lr_byte` changes (#7103*)
-  - #71031: `lr_tok=0.4, lr_byte=0.4`
-  - #71032: `lr_tok=0.35, lr_byte=0.4`
-  - #71033: `lr_tok=0.4, lr_byte=0.45`
-  - #71034: `lr_tok=0.35, lr_byte=0.45`
-  - #71035: `lr_tok=0.4, lr_byte=0.5`
-  - #71036: `lr_tok=0.35, lr_byte=0.5`
+  - [x] #71031: `lr_tok=0.4, lr_byte=0.4`
+  - [x] #71032: `lr_tok=0.35, lr_byte=0.4`
+  - [x] #71033: `lr_tok=0.4, lr_byte=0.45`
+  - [x] #71034: `lr_tok=0.35, lr_byte=0.45`
+  - [x] #71035: `lr_tok=0.4, lr_byte=0.5`
+  - [x] #71036: `lr_tok=0.35, lr_byte=0.5`
+- Testing a linear layer on the bytes right before the sum between the bytes and tokens
+  - [ ] #71051
 
 I can then combine the best norm combination with the best learning rate combination. Afterward, I will try changing the number of bytes per token, for either more or fewer pulled bytes.

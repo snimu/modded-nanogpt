@@ -76,7 +76,7 @@ def plot_results(
     for hnum in header_numbers:
         extract= False
         for line in lines:
-            if line.startswith(f"## {hnum}_"):
+            if line.strip() == f"## {hnum}":
                 extract = True
                 continue
             if extract and line.startswith("##"):
@@ -104,7 +104,7 @@ def plot_byte_stats(header_numbers: list[int | str], filename: str, x_axis: str 
     for hnum in header_numbers:
         extract= False
         for line in lines:
-            if line.startswith(f"## {hnum}_"):
+            if line.strip() == f"## {hnum}":
                 extract = True
                 continue
             if extract and line.startswith("##"):
@@ -126,14 +126,47 @@ def plot_byte_stats(header_numbers: list[int | str], filename: str, x_axis: str 
     plt.show()
 
 
+def plot_lambda(header_numbers: list[int | str], filename: str, norm: bool = False):
+    with open(filename, "r") as f:
+        lines = f.readlines()
+    
+    parsed = {hnum: {"step": [], "token_lambda": [], "byte_lambda": []} for hnum in header_numbers}
+    for hnum in header_numbers:
+        extract= False
+        for line in lines:
+            if line.strip() == f"## {hnum}":
+                extract = True
+                continue
+            if extract and line.startswith("##"):
+                break
+            if extract and line.startswith("step:"):
+                parsed[hnum]["step"].append(int(line.split("step:")[1].split("/")[0]))
+            if extract and line.startswith("token_lambda"):
+                parsed[hnum]["token_lambda"].append(float(line.split("token_lambda=")[1].split(",")[0].strip()))
+                parsed[hnum]["byte_lambda"].append(float(line.split("byte_lambda=")[1].strip()))
+
+    for hnum in header_numbers:
+        if norm:
+            norm_val = np.array(parsed[hnum]["token_lambda"]) + np.array(parsed[hnum]["byte_lambda"])
+        else:
+            norm_val = np.ones_like(np.array(parsed[hnum]["token_lambda"]))
+        plt.plot(parsed[hnum]["step"], np.array(parsed[hnum]["token_lambda"]) / norm_val, label=f"{hnum}: token-lambda")
+        plt.plot(parsed[hnum]["step"], np.array(parsed[hnum]["byte_lambda"]) / norm_val, label=f"{hnum}: byte-lambda")
+    plt.xlabel("step")
+    plt.ylim(0, 1)
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+
 if __name__ == "__main__":
     # plot_hparams(schedule=["cubic", "sqrt"], plot_lr=False)
     plot_results(
         {
-            # 0: "Baseline",
-            1: "Baseline",
+            0: "Baseline",
+            # 1: "Baseline",
             # 7: "MoT",
-            # 71: "MoT-sum",
+            # 71: "MoT-sum, lr_tok=0.3, lr_byte=0.1",
             # 72: "MoT, hparams",
             # 73: "MoT-sum, norm-then-sum",
             # 74: "MoT-sum, norm-then-sum with lambdas",
@@ -144,10 +177,26 @@ if __name__ == "__main__":
             # 77: "MoT, hparams, token_dim=896, shuffled data",
             # "03": "Baseline, seq-len schedule",
             # 78: "MoT, hparams, token_dim=896, seq-len schedule",
-            711: "MoT-concat",
-            712: "MoT-concat, Add 758 to MLP hidden dim",
+            # 711: "MoT-concat",
+            # 712: "MoT-concat, Add 758 to MLP hidden dim",
+            71011: "MoT-sum, lr_tok=0.3, lr_byte=0.3",
+            # 71012: "MoT-sum, lr_tok=0.3, lr_byte=0.4",
+            # 71013: "MoT-sum, lr_tok=0.3, lr_byte=0.2",
+            # 71021: "MoT-sum, lr_tok=0.4, lr_byte=0.3",
+            # 71022: "MoT-sum, lr_tok=0.2, lr_byte=0.3",
+            # 71031: "MoT-sum, lr_tok=0.4, lr_byte=0.4",
+            # 71032: "MoT-sum, lr_tok=0.35, lr_byte=0.4",
+            # 71033: "MoT-sum, lr_tok=0.4, lr_byte=0.45",
+            # 71034: "MoT-sum, lr_tok=0.35, lr_byte=0.45",
+            # 71035: "MoT-sum, lr_tok=0.4, lr_byte=0.5",
+            # 71036: "MoT-sum, lr_tok=0.35, lr_byte=0.5",
+            71041: "MoT-sum, lr_tok=0.3, lr_byte=0.3, lambdas",
+            71042: "MoT-sum, lr_tok=0.3, lr_byte=0.3, normed lambdas",
+            71043: "MoT-sum, lr_tok=0.3, lr_byte=0.3, normed lambdas, (0.99, 0.01)",
+            71044: "MoT-sum, lr_tok=0.3, lr_byte=0.3, normed lambdas, (0.6, 0.4)",
         },
         filename="results.md",
         x_axis="time",
     )
+    # plot_lambda([71041, 71042, 71043, 71044], "results.md", norm=False)
     # plot_byte_stats([79], "results.md", x_axis="step")
