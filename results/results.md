@@ -1805,3 +1805,273 @@ sa_lambdas=[[4.4103, 0.1939],
         [3.1875, 0.9220],
         [2.9822, 0.9927],
         [5.3839, 3.3789]]
+
+## 71043
+
+step:0/5960 val_loss:10.825837 train_time:0ms step_avg:0.28ms
+token_lambda=0.9900, byte_lambda=0.0100
+step:125/5960 val_loss:4.322728 train_time:30544ms step_avg:244.35ms
+token_lambda=0.9687, byte_lambda=0.0856
+step:250/5960 val_loss:3.876997 train_time:59875ms step_avg:239.50ms
+token_lambda=0.8731, byte_lambda=0.1886
+step:375/5960 val_loss:3.698524 train_time:89874ms step_avg:239.67ms
+token_lambda=0.8325, byte_lambda=0.2378
+step:500/5960 val_loss:3.580369 train_time:120216ms step_avg:240.43ms
+token_lambda=0.8074, byte_lambda=0.2718
+step:625/5960 val_loss:3.503168 train_time:150862ms step_avg:241.38ms
+token_lambda=0.7961, byte_lambda=0.2919
+step:750/5960 val_loss:3.445510 train_time:181909ms step_avg:242.55ms
+token_lambda=0.7914, byte_lambda=0.3054
+step:875/5960 val_loss:3.400102 train_time:213101ms step_avg:243.54ms
+token_lambda=0.7870, byte_lambda=0.3185
+step:1000/5960 val_loss:3.360614 train_time:244568ms step_avg:244.57ms
+token_lambda=0.7864, byte_lambda=0.3270
+step:1125/5960 val_loss:3.333445 train_time:276122ms step_avg:245.44ms
+token_lambda=0.7867, byte_lambda=0.3368
+step:1250/5960 val_loss:3.306434 train_time:307764ms step_avg:246.21ms
+token_lambda=0.7894, byte_lambda=0.3431
+step:1375/5960 val_loss:3.287273 train_time:339664ms step_avg:247.03ms
+token_lambda=0.7847, byte_lambda=0.3571
+step:1500/5960 val_loss:3.264798 train_time:371601ms step_avg:247.73ms
+token_lambda=0.7933, byte_lambda=0.3574
+step:1625/5960 val_loss:3.250294 train_time:403657ms step_avg:248.40ms
+token_lambda=0.7945, byte_lambda=0.3660
+step:1750/5960 val_loss:3.233741 train_time:436228ms step_avg:249.27ms
+token_lambda=0.7996, byte_lambda=0.3694
+step:1875/5960 val_loss:3.219168 train_time:468273ms step_avg:249.75ms
+token_lambda=0.8079, byte_lambda=0.3698
+step:2000/5960 val_loss:3.209273 train_time:500334ms step_avg:250.17ms
+token_lambda=0.8134, byte_lambda=0.3740
+step:2125/5960 val_loss:3.197818 train_time:532675ms step_avg:250.67ms
+token_lambda=0.8135, byte_lambda=0.3829
+step:2250/5960 val_loss:3.187780 train_time:565023ms step_avg:251.12ms
+token_lambda=0.8218, byte_lambda=0.3846
+step:2375/5960 val_loss:3.180815 train_time:597420ms step_avg:251.55ms
+token_lambda=0.8264, byte_lambda=0.3894
+step:2500/5960 val_loss:3.173762 train_time:629786ms step_avg:251.91ms
+token_lambda=0.8347, byte_lambda=0.3906
+step:2625/5960 val_loss:3.165237 train_time:662152ms step_avg:252.25ms
+token_lambda=0.8365, byte_lambda=0.3974
+step:2750/5960 val_loss:3.159260 train_time:694449ms step_avg:252.53ms
+token_lambda=0.8413, byte_lambda=0.4019
+step:2875/5960 val_loss:3.153445 train_time:726776ms step_avg:252.79ms
+token_lambda=0.8433, byte_lambda=0.4088
+step:3000/5960 val_loss:3.147607 train_time:759141ms step_avg:253.05ms
+token_lambda=0.8496, byte_lambda=0.4114
+step:3125/5960 val_loss:3.140029 train_time:791541ms step_avg:253.29ms
+token_lambda=0.8518, byte_lambda=0.4185
+step:3250/5960 val_loss:3.134084 train_time:823865ms step_avg:253.50ms
+token_lambda=0.8610, byte_lambda=0.4184
+step:3375/5960 val_loss:3.128099 train_time:856163ms step_avg:253.68ms
+token_lambda=0.8641, byte_lambda=0.4248
+step:3500/5960 val_loss:3.123878 train_time:888566ms step_avg:253.88ms
+token_lambda=0.8677, byte_lambda=0.4316
+step:3625/5960 val_loss:3.119825 train_time:920970ms step_avg:254.06ms
+token_lambda=0.8755, byte_lambda=0.4330
+step:3750/5960 val_loss:3.110527 train_time:953275ms step_avg:254.21ms
+token_lambda=0.8800, byte_lambda=0.4370
+step:3875/5960 val_loss:3.098185 train_time:985673ms step_avg:254.37ms
+token_lambda=0.8835, byte_lambda=0.4405
+step:4000/5960 val_loss:3.085096 train_time:1018502ms step_avg:254.63ms
+token_lambda=0.8798, byte_lambda=0.4513
+step:4125/5960 val_loss:3.074516 train_time:1050848ms step_avg:254.75ms
+token_lambda=0.8848, byte_lambda=0.4528
+step:4250/5960 val_loss:3.062238 train_time:1083235ms step_avg:254.88ms
+token_lambda=0.8808, byte_lambda=0.4629
+step:4375/5960 val_loss:3.052333 train_time:1115644ms step_avg:255.00ms
+token_lambda=0.8851, byte_lambda=0.4620
+step:4500/5960 val_loss:3.040169 train_time:1148255ms step_avg:255.17ms
+token_lambda=0.8786, byte_lambda=0.4731
+step:4625/5960 val_loss:3.028508 train_time:1180923ms step_avg:255.33ms
+token_lambda=0.8827, byte_lambda=0.4729
+step:4750/5960 val_loss:3.015568 train_time:1213616ms step_avg:255.50ms
+token_lambda=0.8765, byte_lambda=0.4825
+step:4875/5960 val_loss:3.004411 train_time:1246454ms step_avg:255.68ms
+token_lambda=0.8754, byte_lambda=0.4867
+step:5000/5960 val_loss:2.992766 train_time:1279967ms step_avg:255.99ms
+token_lambda=0.8690, byte_lambda=0.4955
+step:5125/5960 val_loss:2.981493 train_time:1313020ms step_avg:256.20ms
+token_lambda=0.8668, byte_lambda=0.4993
+step:5250/5960 val_loss:2.970247 train_time:1346265ms step_avg:256.43ms
+token_lambda=0.8622, byte_lambda=0.5055
+step:5375/5960 val_loss:2.959816 train_time:1379552ms step_avg:256.66ms
+token_lambda=0.8597, byte_lambda=0.5089
+step:5500/5960 val_loss:2.949775 train_time:1413051ms step_avg:256.92ms
+token_lambda=0.8550, byte_lambda=0.5145
+step:5625/5960 val_loss:2.940354 train_time:1446754ms step_avg:257.20ms
+token_lambda=0.8499, byte_lambda=0.5201
+step:5750/5960 val_loss:2.931577 train_time:1480857ms step_avg:257.54ms
+token_lambda=0.8456, byte_lambda=0.5245
+step:5875/5960 val_loss:2.925073 train_time:1515096ms step_avg:257.89ms
+token_lambda=0.8433, byte_lambda=0.5270
+step:5960/5960 val_loss:2.922862 train_time:1538381ms step_avg:258.12ms
+token_lambda=0.8428, byte_lambda=0.5276
+skip_weights=[1.0000, 1.0000, 0.3385, 1.0000, 0.4401, 1.0000, 0.3282, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000],
+lambdas=[[ 7.4188,  6.4188],
+        [ 0.5508,  6.8565],
+        [ 0.6512,  4.0024],
+        [ 0.5875,  3.1768],
+        [ 0.4054,  2.1493],
+        [ 0.7073,  3.8388],
+        [ 0.5033,  1.8835],
+        [ 0.7183,  5.0595],
+        [ 0.4892, -0.0656],
+        [ 0.4805,  2.1435],
+        [ 0.5782,  3.6256],
+        [ 0.5209,  2.7008],
+        [ 0.8371,  6.1143],
+        [ 0.9803,  3.4500],
+        [ 0.8700,  0.9327],
+        [ 0.7670, -0.5355]]
+sa_lambdas=[[ 4.0641,  0.3452],
+        [ 5.9597,  0.1725],
+        [ 4.6193,  0.4365],
+        [ 7.3193,  0.5000],
+        [ 7.9113,  0.5000],
+        [ 6.8750,  0.5000],
+        [ 8.6416,  0.5000],
+        [ 0.5000,  0.5000],
+        [ 9.0249,  0.5000],
+        [ 8.9771,  0.5000],
+        [ 7.9059,  0.5000],
+        [10.3001,  0.5000],
+        [ 7.4950,  0.5000],
+        [ 2.8780,  0.8699],
+        [ 3.5249,  1.0021],
+        [ 4.4456,  3.0606]]
+
+## 71044
+
+step:0/5960 val_loss:10.825837 train_time:1ms step_avg:0.78ms
+token_lambda=0.6000, byte_lambda=0.4000
+step:125/5960 val_loss:4.346682 train_time:30469ms step_avg:243.75ms
+token_lambda=0.6756, byte_lambda=0.3203
+step:250/5960 val_loss:3.884964 train_time:59846ms step_avg:239.39ms
+token_lambda=0.6371, byte_lambda=0.3644
+step:375/5960 val_loss:3.694033 train_time:89872ms step_avg:239.66ms
+token_lambda=0.6312, byte_lambda=0.3766
+step:500/5960 val_loss:3.578682 train_time:120251ms step_avg:240.50ms
+token_lambda=0.6311, byte_lambda=0.3838
+step:625/5960 val_loss:3.501091 train_time:150905ms step_avg:241.45ms
+token_lambda=0.6336, byte_lambda=0.3878
+step:750/5960 val_loss:3.445342 train_time:181992ms step_avg:242.66ms
+token_lambda=0.6362, byte_lambda=0.3927
+step:875/5960 val_loss:3.397125 train_time:213182ms step_avg:243.64ms
+token_lambda=0.6396, byte_lambda=0.3955
+step:1000/5960 val_loss:3.359739 train_time:244652ms step_avg:244.65ms
+token_lambda=0.6452, byte_lambda=0.3980
+step:1125/5960 val_loss:3.330929 train_time:276243ms step_avg:245.55ms
+token_lambda=0.6488, byte_lambda=0.4006
+step:1250/5960 val_loss:3.306011 train_time:307886ms step_avg:246.31ms
+token_lambda=0.6527, byte_lambda=0.4042
+step:1375/5960 val_loss:3.284600 train_time:339818ms step_avg:247.14ms
+token_lambda=0.6540, byte_lambda=0.4103
+step:1500/5960 val_loss:3.261668 train_time:371807ms step_avg:247.87ms
+token_lambda=0.6645, byte_lambda=0.4080
+step:1625/5960 val_loss:3.247077 train_time:403883ms step_avg:248.54ms
+token_lambda=0.6663, byte_lambda=0.4148
+step:1750/5960 val_loss:3.231483 train_time:435945ms step_avg:249.11ms
+token_lambda=0.6745, byte_lambda=0.4142
+step:1875/5960 val_loss:3.217207 train_time:467989ms step_avg:249.59ms
+token_lambda=0.6817, byte_lambda=0.4139
+step:2000/5960 val_loss:3.206471 train_time:500080ms step_avg:250.04ms
+token_lambda=0.6856, byte_lambda=0.4186
+step:2125/5960 val_loss:3.195560 train_time:532446ms step_avg:250.56ms
+token_lambda=0.6921, byte_lambda=0.4194
+step:2250/5960 val_loss:3.185758 train_time:564814ms step_avg:251.03ms
+token_lambda=0.6973, byte_lambda=0.4218
+step:2375/5960 val_loss:3.178066 train_time:597202ms step_avg:251.45ms
+token_lambda=0.7001, byte_lambda=0.4260
+step:2500/5960 val_loss:3.170952 train_time:629577ms step_avg:251.83ms
+token_lambda=0.7080, byte_lambda=0.4259
+step:2625/5960 val_loss:3.163265 train_time:661929ms step_avg:252.16ms
+token_lambda=0.7115, byte_lambda=0.4301
+step:2750/5960 val_loss:3.156826 train_time:694225ms step_avg:252.45ms
+token_lambda=0.7162, byte_lambda=0.4332
+step:2875/5960 val_loss:3.150495 train_time:726578ms step_avg:252.72ms
+token_lambda=0.7207, byte_lambda=0.4366
+step:3000/5960 val_loss:3.145740 train_time:758967ms step_avg:252.99ms
+token_lambda=0.7261, byte_lambda=0.4387
+step:3125/5960 val_loss:3.138050 train_time:791365ms step_avg:253.24ms
+token_lambda=0.7301, byte_lambda=0.4423
+step:3250/5960 val_loss:3.130922 train_time:823707ms step_avg:253.45ms
+token_lambda=0.7346, byte_lambda=0.4449
+step:3375/5960 val_loss:3.127815 train_time:856029ms step_avg:253.64ms
+token_lambda=0.7395, byte_lambda=0.4483
+step:3500/5960 val_loss:3.122459 train_time:888446ms step_avg:253.84ms
+token_lambda=0.7445, byte_lambda=0.4519
+step:3625/5960 val_loss:3.117723 train_time:920840ms step_avg:254.02ms
+token_lambda=0.7457, byte_lambda=0.4582
+step:3750/5960 val_loss:3.108006 train_time:953170ms step_avg:254.18ms
+token_lambda=0.7543, byte_lambda=0.4567
+step:3875/5960 val_loss:3.096355 train_time:985529ms step_avg:254.33ms
+token_lambda=0.7567, byte_lambda=0.4607
+step:4000/5960 val_loss:3.082952 train_time:1017847ms step_avg:254.46ms
+token_lambda=0.7570, byte_lambda=0.4663
+step:4125/5960 val_loss:3.072145 train_time:1050195ms step_avg:254.59ms
+token_lambda=0.7593, byte_lambda=0.4699
+step:4250/5960 val_loss:3.060374 train_time:1082577ms step_avg:254.72ms
+token_lambda=0.7559, byte_lambda=0.4790
+step:4375/5960 val_loss:3.050056 train_time:1114982ms step_avg:254.85ms
+token_lambda=0.7588, byte_lambda=0.4803
+step:4500/5960 val_loss:3.037809 train_time:1147583ms step_avg:255.02ms
+token_lambda=0.7551, byte_lambda=0.4876
+step:4625/5960 val_loss:3.026122 train_time:1180248ms step_avg:255.19ms
+token_lambda=0.7570, byte_lambda=0.4890
+step:4750/5960 val_loss:3.013338 train_time:1212992ms step_avg:255.37ms
+token_lambda=0.7544, byte_lambda=0.4946
+step:4875/5960 val_loss:3.001955 train_time:1245775ms step_avg:255.54ms
+token_lambda=0.7512, byte_lambda=0.5003
+step:5000/5960 val_loss:2.990749 train_time:1278753ms step_avg:255.75ms
+token_lambda=0.7472, byte_lambda=0.5069
+step:5125/5960 val_loss:2.979443 train_time:1311799ms step_avg:255.96ms
+token_lambda=0.7475, byte_lambda=0.5082
+step:5250/5960 val_loss:2.968073 train_time:1345832ms step_avg:256.35ms
+token_lambda=0.7439, byte_lambda=0.5132
+step:5375/5960 val_loss:2.957182 train_time:1379141ms step_avg:256.58ms
+token_lambda=0.7392, byte_lambda=0.5188
+step:5500/5960 val_loss:2.947343 train_time:1412651ms step_avg:256.85ms
+token_lambda=0.7354, byte_lambda=0.5233
+step:5625/5960 val_loss:2.937953 train_time:1446399ms step_avg:257.14ms
+token_lambda=0.7330, byte_lambda=0.5263
+step:5750/5960 val_loss:2.929238 train_time:1480498ms step_avg:257.48ms
+token_lambda=0.7294, byte_lambda=0.5302
+step:5875/5960 val_loss:2.922722 train_time:1514774ms step_avg:257.83ms
+token_lambda=0.7269, byte_lambda=0.5328
+step:5960/5960 val_loss:2.920563 train_time:1538100ms step_avg:258.07ms
+token_lambda=0.7266, byte_lambda=0.5331
+skip_weights=[1.0000, 1.0000, 0.3302, 1.0000, 0.4063, 1.0000, 0.2812, 1.0000, 1.0000,
+        1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000],
+lambdas=[[ 7.4181,  6.4182],
+        [ 0.7731,  5.4502],
+        [ 0.6539,  3.7503],
+        [ 0.5976,  3.5234],
+        [ 0.4201,  2.3767],
+        [ 0.6650,  3.3768],
+        [ 0.5343,  3.0673],
+        [ 0.7113,  4.5598],
+        [ 0.4720,  1.5533],
+        [ 0.5161,  1.9898],
+        [ 0.6002,  4.2161],
+        [ 0.5177,  3.6419],
+        [ 0.9223,  4.4151],
+        [ 0.9677,  2.3961],
+        [ 0.8986,  0.8338],
+        [ 0.7846, -0.5561]]
+sa_lambdas=[[4.5202, 0.1748],
+        [5.8326, 0.2412],
+        [3.9523, 0.5246],
+        [7.5340, 0.5000],
+        [7.9848, 0.5000],
+        [7.9312, 0.5000],
+        [8.7837, 0.5000],
+        [0.5000, 0.5000],
+        [8.7363, 0.5000],
+        [8.8955, 0.5000],
+        [7.7108, 0.5000],
+        [8.5407, 0.5000],
+        [7.6957, 0.5000],
+        [3.0270, 0.8260],
+        [3.1285, 0.9471],
+        [4.7562, 3.1265]]
