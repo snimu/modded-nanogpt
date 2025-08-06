@@ -1,4 +1,5 @@
 
+import ast
 from typing import Literal
 
 import matplotlib.pyplot as plt
@@ -81,7 +82,7 @@ def plot_results(
                 continue
             if extract and line.startswith("##"):
                 break
-            if extract and line.startswith("step:"):
+            if extract and line.startswith("step:") and "val_loss" in line:
                 parsed[hnum]["loss"].append(float(line.split()[1].split("val_loss:")[-1]))
                 parsed[hnum]["step"].append(int(line.split("step:")[1].split("/")[0]))
                 parsed[hnum]["time"].append(float(line.split("train_time:")[1].split("ms")[0]) / 1000)
@@ -126,7 +127,7 @@ def plot_byte_stats(header_numbers: list[int | str], filename: str, x_axis: str 
     plt.show()
 
 
-def plot_lambda(header_numbers: list[int | str], filename: str, norm: bool = False):
+def plot_norm_lambdas(header_numbers: list[int | str], filename: str, norm: bool = False):
     with open(filename, "r") as f:
         lines = f.readlines()
     
@@ -159,12 +160,43 @@ def plot_lambda(header_numbers: list[int | str], filename: str, norm: bool = Fal
     plt.show()
 
 
+def plot_skip_weights(header_numbers: list[int | str], filename: str):
+    with open(filename, "r") as f:
+        lines = f.readlines()
+
+    parsed = {hnum: {"skip_weights": ""} for hnum in header_numbers}
+    for hnum in header_numbers:
+        correct_hnum = False
+        extract= False
+        for line in lines:
+            if line.strip() == f"## {hnum}":
+                correct_hnum = True
+                continue
+            if correct_hnum and line.startswith("skip_weights="):
+                extract = True
+            if correct_hnum and extract and line.startswith("lambdas="):
+                extract=False
+                correct_hnum = False
+                break
+            if extract:
+                parsed[hnum]["skip_weights"] += line.split("skip_weights=")[-1].strip()
+
+    for hnum in header_numbers:
+        parsed[hnum]["skip_weights"] = np.array(ast.literal_eval(parsed[hnum]["skip_weights"]))
+        plt.plot(parsed[hnum]["skip_weights"], label=f"{hnum}: skip-weights")
+    plt.xlabel("layer")
+    plt.ylabel("skip-weight")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+
 if __name__ == "__main__":
     # plot_hparams(schedule=["cubic", "sqrt"], plot_lr=False)
     plot_results(
         {
-            0: "Baseline",
-            # 1: "Baseline",
+            # 0: "Baseline",
+            1: "Baseline",
             # 7: "MoT",
             # 71: "MoT-sum, lr_tok=0.3, lr_byte=0.1",
             # 72: "MoT, hparams",
@@ -179,6 +211,7 @@ if __name__ == "__main__":
             # 78: "MoT, hparams, token_dim=896, seq-len schedule",
             # 711: "MoT-concat",
             # 712: "MoT-concat, Add 758 to MLP hidden dim",
+            # 713: "MoT-concat, switched Attention & MLP",
             71011: "MoT-sum, lr_tok=0.3, lr_byte=0.3",
             # 71012: "MoT-sum, lr_tok=0.3, lr_byte=0.4",
             # 71013: "MoT-sum, lr_tok=0.3, lr_byte=0.2",
@@ -196,7 +229,8 @@ if __name__ == "__main__":
             71044: "MoT-sum, lr_tok=0.3, lr_byte=0.3, normed lambdas, (0.6, 0.4)",
         },
         filename="results.md",
-        x_axis="time",
+        x_axis="step",
     )
-    # plot_lambda([71041, 71042, 71043, 71044], "results.md", norm=False)
+    # plot_norm_lambdas([71041, 71042, 71043, 71044], "results.md", norm=False)
     # plot_byte_stats([79], "results.md", x_axis="step")
+    # plot_skip_weights([71041], "results.md")

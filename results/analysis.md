@@ -361,7 +361,7 @@ Changed from 77:
 Here is the experiments I had planned before creating this document:
 
 - [ ] Do MoT by addition, but apply linear layer to the bytes before so that they can be mixed
-- [ ] Zero-init bytes?
+- [x] Zero-init bytes?
 - [ ] Try it with `bpt=8, byte_dim=128` and `bpt=32, byte_dim=32`
   - So many bytes are pulled that it might hurt
   - On the other hand, doing it more might give more of an advantage
@@ -372,7 +372,7 @@ Here is the experiments I had planned before creating this document:
 
 Now, I would add the following:
 
-- [ ] Independently test norm changes and hyperparameter changes
+- [x] Independently test norm changes and hyperparameter changes
 
 The plan:
 
@@ -440,7 +440,9 @@ Predictions:
 - It's likely slightly worse than [#711](#711); and if it's better, only slightly so
 - The speed will hopefully be unchanged
 
-...
+![1, 711, 713: step, 1500-6000](images/1_711_713_step_1500-6000.png)
+
+This variant is noticeably worse than [#711](#711) per step (and I've looked, it takes approximately the same amount of time, minus random variation). I'll dismiss it.
 
 ## 71011, 71012, 71013, 71021, 71022
 
@@ -494,3 +496,55 @@ So my next learning-rate tuning experiments should be:
   - [ ] #71051
 
 I can then combine the best norm combination with the best learning rate combination. Afterward, I will try changing the number of bytes per token, for either more or fewer pulled bytes.
+
+## 71031, 71032, 71033, 71034, 71035, 71036
+
+Another learning rate ablation of [#71](#71) with the following values:
+
+| Experiment number | `lr_tok` | `lr_byte` |
+| --- | --- | --- |
+| 71031 | 0.4 | 0.4 |
+| 71032 | 0.35 | 0.4 |
+| 71033 | 0.4 | 0.45 |
+| 71034 | 0.35 | 0.45 |
+| 71035 | 0.4 | 0.5 |
+| 71036 | 0.35 | 0.5 |
+
+Let's first look at steps 1500 to 6000:
+
+![71031-71036: step, 1500-6000](images/71031-71036_step_1500-6000.png)
+
+They are clearly all very close, and they still suffer from the loss hump. To be able to make up any differences between these, I'll zoom in more closely:
+
+![71031-71036: step, 5500-6000](images/71031-71036_step_5500-6000.png)
+
+Two setting come out on top, essentially sharing the first place:
+
+- #71032: `lr_token=0.35, lr_byte=0.4`
+- #71036: `lr_token=0.35, lr_byte=0.5`
+
+That the third place is taken by `lr_token=0.35, lr_byte=0.45` tells me that `lr_token` shouldn't be turned up beyond `0.35`. As for the choice between the `lr_byte` values, the trend is much less clear to me.
+
+Let's compare the two top settings to the best setting from before, [#71012](#71011-71012-71013-71021-71022), and to the baseline:
+
+![1, 71012, 71032, 71036: step, 5500-6000](images/1_71012_71032_71036_step_5500-6000.png)
+
+They close the gap to the baseline almost halfway. That's pretty decent!
+
+## 71041, 71042, 71043, 71044
+
+Variations of [#71011](#71011-71012-71013-71021-71022) (because #71011 has both learning rates at `0.3`, like in the original modded-nanogpt).
+
+Let's first look at the per-step validation losses:
+
+![1, 71011, 71041-71044: step, 5500-6000](images/1_71011_71041-71044_step_5500-6000.png)
+
+Clearly, norming both embeddings individually and then their weighted sum again is superior to just norming the embeddings' sum. The only time this is not true if when the lambdas are initialized to `lambda_token=0.99, lambda_byte=0.01`. Also clearly, norming the lambdas to sum to one is also helpful. Initialization schemes other than equal weight to tokens and bytes are pointless.
+
+To get a fuller view of the results, let's also look at loss over time (because additional norms etc. are added):
+
+![1, 71011, 71041-71044: time, 1200-1600](images/1_71011_71041-71044_time_1200-1600.png)
+
+Unfortunately, the norms add a significant amount of time to the runs; especially the norming of the lambdas. So per unit of time (the measure we ultimately care about in a speedrun), the best run is with a weighted sum of normed embeddings, but without norming the lambdas.
+
+Next up, I should perform an experiment with this norm setting and the best hyperparameter setting I found so far. I'm curious about those hyperparameters though; is `0.3` better for `lr_token` or `0.35`? And which of `0.4`, `0.45`, and `0.5` is the best value for `lr_byte`? Let's just try all combinations in #71061-71066.
